@@ -1,8 +1,8 @@
 {
   "name":"dolosblackmagic",
-  "version":"0.2.0",
+  "version":"0.3.0",
   "private":true,
-  "description":"Local-first browser DFIR, artifact analysis and log intelligence workbench.",
-  "scripts":{"test":"node tests/core.test.mjs && node tests/log-engine.test.mjs && node scripts/check-static.mjs","serve":"python3 -m http.server 8080 -d site"},
+  "description":"Local-first browser DFIR, log intelligence, detection engineering and incident investigation workbench.",
+  "scripts":{"test":"node tests/core.test.mjs && node tests/log-engine.test.mjs && node tests/soc.test.mjs && node scripts/check-static.mjs","serve":"python3 -m http.server 8080 -d site"},
   "engines":{"node":">=24"}
 }
