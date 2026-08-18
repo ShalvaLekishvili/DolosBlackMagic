@@ -1,10 +1,28 @@
 # DolosBlackMagic
 
-**Turn artifacts into answers.** DolosBlackMagic is a local-first browser DFIR and threat investigation workbench designed to run on free static hosting such as GitHub Pages or Netlify.
+**Turn artifacts and logs into answers.** DolosBlackMagic is a local-first browser DFIR, threat investigation and log-intelligence workbench designed to run on free static hosting such as GitHub Pages or Netlify.
 
-## What works
+## v0.2 — BlackLog Intelligence
 
-- Local file and text intake (20 MB UI limit)
+DolosBlackMagic now includes a browser-side log pipeline for heterogeneous security telemetry:
+
+- Automatic format detection: JSON, NDJSON/JSONL, CSV, RFC-style Syslog, CEF, LEEF, key=value and plain text
+- Common event normalization for timestamp, source, host, event ID, user, process, command line, source/destination IP and port, action, URL and message
+- Built-in detections for Windows Security, Sysmon-like telemetry, Linux SSH/sudo activity, web attack probes, firewall denies, encoded PowerShell, credential dumping and security-control tampering
+- MITRE ATT&CK mappings on detections
+- Correlation for repeated authentication failures and multi-port scanning behavior
+- Searchable normalized event console
+- Severity, source and detections-only filtering
+- Findings queue and telemetry entity summary
+- CSV normalized-event export and full JSON analysis export
+- Up to 35 MB single-file browser ingestion in the BlackLog UI
+- No backend required for the log-analysis pipeline
+
+The parser is intentionally extensible. A generic fallback preserves unknown log lines as normalized messages instead of silently dropping data. “Any log” therefore means broad best-effort ingestion; vendor-perfect semantic parsing still requires vendor-specific adapters as those sources are added.
+
+## Artifact / DFIR features
+
+- Local file and text intake (20 MB artifact UI limit)
 - SHA-256 and SHA-1 via Web Crypto
 - PE / ELF / ZIP / Office / PDF / script signature classification
 - Shannon entropy and printable-string extraction
@@ -24,13 +42,13 @@
 
 ## Privacy model
 
-The core app has **no backend**. Artifact bytes are read by the browser and are not uploaded by DolosBlackMagic. Saved investigations use browser LocalStorage. External reputation enrichment is intentionally not claimed in this version.
+The core app has **no backend**. Artifact bytes and imported logs are read by the browser and are not uploaded by DolosBlackMagic. Saved investigations use browser LocalStorage. External reputation enrichment is intentionally not claimed in this version.
 
 > Treat the browser itself as part of your security boundary. Do not analyze highly sensitive or dangerous samples in an untrusted browser profile or on an unmanaged endpoint.
 
 ## Run locally
 
-No install is required:
+No application dependencies are required:
 
 ```bash
 python3 -m http.server 8080 -d site
@@ -38,27 +56,27 @@ python3 -m http.server 8080 -d site
 
 Open `http://127.0.0.1:8080`.
 
-For tests, Node.js 20+ is enough and there are no npm dependencies:
+For regression tests, Node.js 24+ is used and there are no npm package dependencies:
 
 ```bash
 npm test
 ```
 
+The test suite covers the artifact core plus BlackLog format detection, normalization, detection and correlation behavior.
+
 ## Deploy to GitHub Pages
 
-1. Create a public repository named `DolosBlackMagic`.
-2. Upload/push the **contents of this folder** to the repository root.
-3. Ensure the default branch is `main`.
-4. In **Settings → Pages → Build and deployment → Source**, choose **GitHub Actions**.
-5. The included `.github/workflows/pages.yml` runs tests and deploys `site/`.
+1. Use a public repository with `main` as the default branch.
+2. In **Settings → Pages → Build and deployment → Source**, choose **GitHub Actions**.
+3. `.github/workflows/pages.yml` runs tests and deploys `site/`.
 
-The typical URL will be:
+Typical project URL:
 
 `https://<username>.github.io/DolosBlackMagic/`
 
 ## Deploy to Netlify
 
-Import the repository into Netlify. `netlify.toml` already sets the publish directory to `site` and adds baseline security headers.
+Import the repository into Netlify. `netlify.toml` sets the publish directory to `site` and adds baseline security headers.
 
 ## Structure
 
@@ -67,12 +85,17 @@ DolosBlackMagic/
 ├── site/
 │   ├── index.html
 │   ├── app.css
+│   ├── log.css
 │   ├── app.js
 │   ├── core.js
+│   ├── log-engine.js
+│   ├── log-ui.js
 │   ├── favicon.svg
 │   ├── manifest.webmanifest
 │   └── sw.js
-├── tests/core.test.mjs
+├── tests/
+│   ├── core.test.mjs
+│   └── log-engine.test.mjs
 ├── scripts/check-static.mjs
 ├── .github/workflows/
 │   ├── ci.yml
@@ -85,7 +108,7 @@ DolosBlackMagic/
 
 ## Security scope
 
-DolosBlackMagic v0.1 is a **static-analysis and investigation-assistance interface**. It does not execute submitted scripts/binaries and should not be treated as a malware sandbox, antivirus engine, EDR, or authoritative threat-intelligence verdict system.
+DolosBlackMagic is a **static-analysis and investigation-assistance interface**. It does not execute submitted scripts/binaries and should not be treated as a malware sandbox, antivirus engine, EDR, full SIEM backend, or authoritative threat-intelligence verdict system. BlackLog detections are analyst-assistance heuristics and correlation rules; they are not a substitute for validated production detection content.
 
 ## License
 
