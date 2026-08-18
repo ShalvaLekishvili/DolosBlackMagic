@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+const mem=new Map();globalThis.localStorage={getItem:k=>mem.has(k)?mem.get(k):null,setItem:(k,v)=>mem.set(k,String(v)),removeItem:k=>mem.delete(k),clear:()=>mem.clear()};
+await import('../site/soc-engine.js');const S=globalThis.DBMSOC;assert.ok(S,'SOC engine exported');
+const rule=S.saveRule({name:'Encoded PowerShell',severity:'high',mitre:['T1059.001'],conditions:[{field:'commandLine',op:'contains',value:'-EncodedCommand'}]});assert.equal(rule.enabled,true);assert.equal(S.customRules().length,1);
+const ev={id:'e1',eventId:'4688',commandLine:'powershell.exe -EncodedCommand AAA',message:'process',host:'WS01',user:'alice',srcIp:'10.0.0.5',dstIp:'203.0.113.2',process:'powershell.exe'};const hits=S.runRules([ev]);assert.equal(hits.length,1);assert.equal(hits[0].severity,'high');
+const kb=S.eventKnowledge(ev);assert.equal(kb.title,'Process creation');
+const sigma=`title: Suspicious Certutil\nlevel: high\ntags:\n  - attack.t1218\ndetection:\n  selection:\n    Image|endswith: certutil.exe\n  condition: selection`;const sr=S.parseSigma(sigma);assert.equal(sr.source,'sigma');assert.equal(sr.conditions[0].field,'process');
+const wz=`<group name="windows"><rule id="99001" level="12"><field name="win.system.eventID">1102</field><description>Audit log cleared</description></rule></group>`;const wr=S.parseWazuh(wz);assert.equal(wr.length,1);assert.equal(wr[0].severity,'critical');
+const finding={id:'f1',ruleId:'r1',name:'Test finding',severity:'high',mitre:['T1110'],eventIds:['e1']};const inc=S.createIncident({title:'SOC test incident',findings:[finding],events:[ev]});assert.equal(inc.entities.hosts[0],'WS01');assert.equal(S.incidentGraph(inc).nodes.length>1,true);S.updateIncident(inc.id,{status:'investigating'});assert.equal(S.incidents()[0].status,'investigating');
+const view=S.saveView({name:'High only',severity:'high',query:'powershell',detectionsOnly:true});assert.equal(S.views()[0].id,view.id);assert.match(S.reportIncident(S.incidents()[0]),/SOC test incident/);
+console.log('SOC engine tests passed');
