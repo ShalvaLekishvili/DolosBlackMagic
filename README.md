@@ -1,10 +1,27 @@
 # DolosBlackMagic
 
-**Turn artifacts and logs into answers.** DolosBlackMagic is a local-first browser DFIR, threat investigation and log-intelligence workbench designed to run on free static hosting such as GitHub Pages or Netlify.
+**Turn artifacts and logs into answers.** DolosBlackMagic is a local-first browser DFIR, threat investigation, log-intelligence and detection-engineering workbench designed to run on free static hosting such as GitHub Pages or Netlify.
 
-## v0.2 — BlackLog Intelligence
+## v0.3 — Detection Studio / SOC Workflow
 
-DolosBlackMagic now includes a browser-side log pipeline for heterogeneous security telemetry:
+The v0.3 upgrade extends BlackLog into an analyst workflow with ten integrated capabilities:
+
+1. **Custom detection-rule builder** — create local rules against the normalized BlackLog schema using equals, contains, starts-with, ends-with and regex operators.
+2. **Sigma-like import** — import common Sigma YAML selections and translate supported fields into normalized DolosBlackMagic fields.
+3. **Wazuh XML import** — import supported `<rule>` blocks, `<field>` conditions, `<match>` clauses and severity levels.
+4. **Windows/Sysmon Event Knowledge Base** — contextual reference for high-value Windows Security and Sysmon event IDs with ATT&CK hints.
+5. **Alert triage** — mark findings as new, investigating, benign, escalated or closed and store analyst notes locally.
+6. **Incident creation** — convert current BlackLog findings/events into durable local incidents with severity, entities and status workflow.
+7. **Entity correlation graph** — correlate incident hosts, users, IP addresses, processes and findings in a relationship view.
+8. **Saved analyst views** — preserve reusable search, severity, source and detections-only filters and re-apply them to BlackLog.
+9. **Incident reporting** — export incidents as Markdown or JSON with findings, entities, timeline and analyst notes.
+10. **Regression + deployment hardening** — Node 24 CI now covers artifact, BlackLog and SOC-engine behavior; PWA cache v3 includes all Detection Studio assets.
+
+All Detection Studio persistence uses browser LocalStorage. Imported rules and telemetry are parsed as data and are never executed.
+
+## BlackLog Intelligence
+
+DolosBlackMagic includes a browser-side log pipeline for heterogeneous security telemetry:
 
 - Automatic format detection: JSON, NDJSON/JSONL, CSV, RFC-style Syslog, CEF, LEEF, key=value and plain text
 - Common event normalization for timestamp, source, host, event ID, user, process, command line, source/destination IP and port, action, URL and message
@@ -16,9 +33,9 @@ DolosBlackMagic now includes a browser-side log pipeline for heterogeneous secur
 - Findings queue and telemetry entity summary
 - CSV normalized-event export and full JSON analysis export
 - Up to 35 MB single-file browser ingestion in the BlackLog UI
-- No backend required for the log-analysis pipeline
+- Generic fallback for unknown log lines instead of silently dropping data
 
-The parser is intentionally extensible. A generic fallback preserves unknown log lines as normalized messages instead of silently dropping data. “Any log” therefore means broad best-effort ingestion; vendor-perfect semantic parsing still requires vendor-specific adapters as those sources are added.
+“Any log” means broad best-effort ingestion. Vendor-perfect semantics still require source-specific adapters as those sources are added.
 
 ## Artifact / DFIR features
 
@@ -37,18 +54,16 @@ The parser is intentionally extensible. A generic fallback preserves unknown log
 - Markdown and JSON report export plus Print/Save-as-PDF
 - Responsive desktop, tablet and mobile interface
 - PWA/service-worker caching
-- GitHub Actions CI and GitHub Pages deploy workflow
+- GitHub Actions CI and GitHub Pages deployment
 - Netlify static deployment configuration
 
 ## Privacy model
 
-The core app has **no backend**. Artifact bytes and imported logs are read by the browser and are not uploaded by DolosBlackMagic. Saved investigations use browser LocalStorage. External reputation enrichment is intentionally not claimed in this version.
+The core application has **no backend**. Artifact bytes, imported logs, custom detection rules, triage state, saved views and incidents remain in the browser unless you explicitly export them.
 
 > Treat the browser itself as part of your security boundary. Do not analyze highly sensitive or dangerous samples in an untrusted browser profile or on an unmanaged endpoint.
 
 ## Run locally
-
-No application dependencies are required:
 
 ```bash
 python3 -m http.server 8080 -d site
@@ -56,27 +71,21 @@ python3 -m http.server 8080 -d site
 
 Open `http://127.0.0.1:8080`.
 
-For regression tests, Node.js 24+ is used and there are no npm package dependencies:
+Regression tests require Node.js 24+ and no npm package dependencies:
 
 ```bash
 npm test
 ```
 
-The test suite covers the artifact core plus BlackLog format detection, normalization, detection and correlation behavior.
+The suite covers artifact analysis, BlackLog parsing/detection/correlation, Detection Studio rule matching/imports, event knowledge, incidents, entity graphs, saved views and static asset integrity.
 
-## Deploy to GitHub Pages
+## GitHub Pages
 
-1. Use a public repository with `main` as the default branch.
-2. In **Settings → Pages → Build and deployment → Source**, choose **GitHub Actions**.
-3. `.github/workflows/pages.yml` runs tests and deploys `site/`.
+The included `.github/workflows/pages.yml` tests and deploys `site/` from `main`. Repository Pages source must be configured as **GitHub Actions**.
 
 Typical project URL:
 
 `https://<username>.github.io/DolosBlackMagic/`
-
-## Deploy to Netlify
-
-Import the repository into Netlify. `netlify.toml` sets the publish directory to `site` and adds baseline security headers.
 
 ## Structure
 
@@ -86,16 +95,20 @@ DolosBlackMagic/
 │   ├── index.html
 │   ├── app.css
 │   ├── log.css
+│   ├── soc.css
 │   ├── app.js
 │   ├── core.js
 │   ├── log-engine.js
 │   ├── log-ui.js
+│   ├── soc-engine.js
+│   ├── soc-ui.js
 │   ├── favicon.svg
 │   ├── manifest.webmanifest
 │   └── sw.js
 ├── tests/
 │   ├── core.test.mjs
-│   └── log-engine.test.mjs
+│   ├── log-engine.test.mjs
+│   └── soc.test.mjs
 ├── scripts/check-static.mjs
 ├── .github/workflows/
 │   ├── ci.yml
@@ -108,7 +121,7 @@ DolosBlackMagic/
 
 ## Security scope
 
-DolosBlackMagic is a **static-analysis and investigation-assistance interface**. It does not execute submitted scripts/binaries and should not be treated as a malware sandbox, antivirus engine, EDR, full SIEM backend, or authoritative threat-intelligence verdict system. BlackLog detections are analyst-assistance heuristics and correlation rules; they are not a substitute for validated production detection content.
+DolosBlackMagic is a **static-analysis and investigation-assistance interface**. It does not execute submitted scripts/binaries and is not a malware sandbox, antivirus engine, EDR, full SIEM backend or authoritative threat-intelligence verdict system. Built-in and custom detections are analyst-assistance content and should be validated before operational use.
 
 ## License
 
