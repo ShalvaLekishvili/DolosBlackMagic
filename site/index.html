@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#080808" />
+  <meta name="description" content="DolosBlackMagic — local-first browser DFIR and threat investigation workbench." />
+  <title>DolosBlackMagic — Investigation Workbench</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="app.css" />
+</head>
+<body>
+  <div class="noise"></div>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand"><div class="brand-mark">◈</div><div><strong>DOLOS</strong><span>BLACKMAGIC</span></div></div>
+      <nav class="nav" aria-label="Primary">
+        <button class="nav-item active" data-view="dashboard">Overview</button>
+        <button class="nav-item" data-view="intake">Artifact Intake</button>
+        <button class="nav-item" data-view="graph">BlackGraph</button>
+        <button class="nav-item" data-view="timeline">Dark Timeline</button>
+        <button class="nav-item" data-view="iocs">IOC Constellation</button>
+        <button class="nav-item" data-view="decoder">Magic Decoder</button>
+        <button class="nav-item" data-view="grimoire">Grimoire</button>
+        <button class="nav-item" data-view="report">Report</button>
+      </nav>
+      <div class="sidebar-foot"><span class="status-dot"></span><span>Local analysis engine</span><small>artifact bytes stay in your browser</small></div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="icon-btn mobile-only" id="menuBtn" aria-label="Open menu">☰</button>
+        <div class="search-wrap"><span>⌕</span><input id="globalSearch" placeholder="Search cases, IOC, hashes…" autocomplete="off" /></div>
+        <div class="top-actions"><button class="ghost" id="newCaseBtn">New investigation</button><button class="primary" id="sampleBtn">Load safe sample</button></div>
+      </header>
+
+      <section class="view active" id="view-dashboard">
+        <div class="hero"><div><div class="eyebrow">INVESTIGATIVE SECURITY WORKBENCH</div><h1>Turn artifacts<br><em>into answers.</em></h1><p>Static file inspection, IOC extraction, event timelines, graph correlation and case reporting — locally in the browser.</p></div><div class="hero-orbit" aria-hidden="true"><div class="orbit o1"></div><div class="orbit o2"></div><div class="orbit-dot d1"></div><div class="orbit-dot d2"></div><div class="orbit-core">◈</div></div></div>
+        <div class="metrics"><article><span>ACTIVE CASES</span><strong id="metricCases">0</strong><small>stored locally</small></article><article><span>ARTIFACT RISK</span><strong id="metricRisk">00</strong><small id="metricSeverity">Informational</small></article><article><span>INDICATORS</span><strong id="metricIocs">0</strong><small>extracted locally</small></article><article><span>MITRE TECHNIQUES</span><strong id="metricMitre">0</strong><small>heuristic mapping</small></article></div>
+        <div class="grid two"><article class="panel"><div class="panel-head"><div><span class="kicker">CASE PULSE</span><h2>Current investigation</h2></div><button class="text-btn" data-jump="intake">Analyze artifact →</button></div><div id="casePulse" class="empty"><div class="empty-icon">◇</div><h3>No active investigation</h3><p>Drop a file, paste a command or load a safe sample to begin.</p></div></article><article class="panel"><div class="panel-head"><div><span class="kicker">PRIVACY</span><h2>Local-first by design</h2></div></div><div class="privacy-list"><div><b>01</b><span><strong>No upload pipeline</strong><small>Core analysis uses Web Crypto and client-side parsing.</small></span></div><div><b>02</b><span><strong>No account required</strong><small>Cases are kept in browser LocalStorage.</small></span></div><div><b>03</b><span><strong>Static deployment</strong><small>Runs on GitHub Pages or Netlify without a backend.</small></span></div></div></article></div>
+      </section>
+
+      <section class="view" id="view-intake"><div class="section-title"><span class="kicker">ARTIFACT CHAMBER</span><h1>Artifact Intake</h1><p>Analyze a local file or paste security telemetry, commands, headers, URLs or JSON.</p></div><div class="intake-grid"><div class="drop-zone" id="dropZone" tabindex="0"><input type="file" id="fileInput" hidden /><div class="drop-symbol">＋</div><h2>Drop artifact here</h2><p>or click to browse</p><span>PE • ELF • scripts • documents • JSON • text</span></div><div class="paste-panel"><label for="textInput">PASTE ARTIFACT / TELEMETRY</label><textarea id="textInput" spellcheck="false" placeholder="powershell.exe -enc ...\n\nOr paste Wazuh/Sysmon JSON, email headers, IOC lists, URLs…"></textarea><div class="row"><input id="caseTitle" placeholder="Optional case title"/><button class="primary" id="analyzeTextBtn">Analyze text</button></div></div></div><div id="analysisSummary" class="analysis-summary hidden"></div></section>
+
+      <section class="view" id="view-graph"><div class="section-title"><span class="kicker">BLACKGRAPH</span><h1>Investigation Graph</h1><p>Drag nodes to inspect relationships. Derived locally from the active case.</p></div><div class="graph-toolbar"><span id="graphCount">0 nodes</span><button class="ghost" id="resetGraphBtn">Reset layout</button></div><div class="graph-canvas" id="graphCanvas"><div class="empty"><h3>No graph yet</h3><p>Analyze an artifact first.</p></div></div></section>
+
+      <section class="view" id="view-timeline"><div class="section-title"><span class="kicker">DARK TIMELINE</span><h1>Event Timeline</h1><p>Structured JSON/NDJSON events are normalized into a chronological view.</p></div><div class="timeline" id="timelineList"><div class="empty"><h3>No structured events</h3><p>Paste JSON telemetry with timestamps to populate the timeline.</p></div></div></section>
+
+      <section class="view" id="view-iocs"><div class="section-title"><span class="kicker">IOC CONSTELLATION</span><h1>Indicators</h1><p>URLs, domains, IPs, email addresses and hashes extracted from the active artifact.</p></div><div class="filter-row"><input id="iocFilter" placeholder="Filter indicators…"/><button class="ghost" id="copyIocsBtn">Copy defanged</button></div><div class="table-wrap"><table><thead><tr><th>Type</th><th>Indicator</th><th>Defanged</th></tr></thead><tbody id="iocBody"><tr><td colspan="3" class="muted-cell">No indicators extracted.</td></tr></tbody></table></div></section>
+
+      <section class="view" id="view-decoder"><div class="section-title"><span class="kicker">MAGIC DECODER</span><h1>Decode layers</h1><p>Safely peel Base64-like layers without executing the payload.</p></div><div class="decoder-grid"><div class="panel"><label>ENCODED INPUT</label><textarea id="decoderInput" class="mono" placeholder="Paste Base64 or encoded PowerShell payload…"></textarea><button class="primary full" id="decodeBtn">Decode safely</button></div><div class="panel"><div class="panel-head"><h2>Layers</h2><span id="decodeCount" class="badge">0</span></div><div id="decoderOutput" class="decoder-output empty"><p>No decoded layers yet.</p></div></div></div></section>
+
+      <section class="view" id="view-grimoire"><div class="section-title"><span class="kicker">THE GRIMOIRE</span><h1>Saved investigations</h1><p>Local case library stored only in this browser.</p></div><div class="filter-row"><input id="caseFilter" placeholder="Search saved investigations…"/><button class="ghost danger" id="clearCasesBtn">Clear all</button></div><div id="caseGrid" class="case-grid"></div></section>
+
+      <section class="view" id="view-report"><div class="section-title"><span class="kicker">CASE REPORT</span><h1>Investigation Report</h1><p>Export the active case as Markdown, JSON or a printable PDF.</p></div><div class="report-actions"><button class="ghost" id="exportMdBtn">Export Markdown</button><button class="ghost" id="exportJsonBtn">Export JSON</button><button class="primary" id="printBtn">Print / PDF</button></div><article class="report-sheet" id="reportSheet"><div class="empty"><h3>No active report</h3><p>Analyze or open a saved case first.</p></div></article></section>
+    </main>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="core.js"></script><script src="app.js"></script>
+</body>
+</html>

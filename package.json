@@ -1,0 +1,8 @@
+{
+  "name":"dolosblackmagic",
+  "version":"0.1.0",
+  "private":true,
+  "description":"Local-first browser DFIR and threat investigation workbench.",
+  "scripts":{"test":"node tests/core.test.mjs && node scripts/check-static.mjs","serve":"python3 -m http.server 8080 -d site"},
+  "engines":{"node":">=20"}
+}

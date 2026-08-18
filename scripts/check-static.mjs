@@ -1,0 +1,2 @@
+import fs from 'node:fs';import path from 'node:path';
+const root=new URL('../site/',import.meta.url);const req=['index.html','app.css','core.js','app.js','favicon.svg','manifest.webmanifest','sw.js'];let fail=0;for(const f of req){const p=new URL(f,root);if(!fs.existsSync(p)){console.error('missing',f);fail++}else console.log('ok',f)}const html=fs.readFileSync(new URL('index.html',root),'utf8');for(const ref of ['app.css','core.js','app.js'])if(!html.includes(ref)){console.error('index missing ref',ref);fail++}if(fail)process.exit(1);
