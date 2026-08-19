@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="420" viewBox="0 0 1280 420" role="img" aria-labelledby="title desc">
+  <title id="title">DolosBlackMagic</title>
+  <desc id="desc">Local-first DFIR, log intelligence, detection engineering and SOC operations workbench.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#07090c"/>
+      <stop offset="0.55" stop-color="#0b0f15"/>
+      <stop offset="1" stop-color="#090c10"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="72%" cy="28%" r="55%">
+      <stop offset="0" stop-color="#6f9bd0" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#6f9bd0" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="soft"><feGaussianBlur stdDeviation="22"/></filter>
+  </defs>
+  <rect width="1280" height="420" rx="24" fill="url(#bg)"/>
+  <rect width="1280" height="420" rx="24" fill="url(#glow)"/>
+  <g opacity="0.55" stroke="#233040" fill="none">
+    <circle cx="1020" cy="202" r="122"/>
+    <circle cx="1020" cy="202" r="82"/>
+    <circle cx="1020" cy="202" r="42"/>
+    <path d="M905 154 L980 188 L1056 128 L1128 221 L1068 284 L972 252 Z"/>
+    <path d="M980 188 L972 252 M1056 128 L1068 284 M905 154 L1128 221"/>
+  </g>
+  <g fill="#8fb2da">
+    <circle cx="905" cy="154" r="5"/>
+    <circle cx="980" cy="188" r="5"/>
+    <circle cx="1056" cy="128" r="5"/>
+    <circle cx="1128" cy="221" r="5"/>
+    <circle cx="1068" cy="284" r="5"/>
+    <circle cx="972" cy="252" r="5"/>
+  </g>
+  <rect x="902" y="322" width="236" height="30" rx="7" fill="#0d141d" stroke="#25364a"/>
+  <circle cx="922" cy="337" r="4" fill="#78ad8e"/>
+  <text x="934" y="341" font-family="Arial,Helvetica,sans-serif" font-size="11" fill="#8e9caf" letter-spacing="1.5">LOCAL ANALYSIS ENGINE</text>
+  <g transform="translate(74 67)">
+    <rect width="48" height="48" rx="12" fill="#101720" stroke="#33465d"/>
+    <path d="M24 10 L38 24 L24 38 L10 24 Z" fill="none" stroke="#9dbbe0" stroke-width="2"/>
+    <circle cx="24" cy="24" r="4" fill="#9dbbe0"/>
+  </g>
+  <text x="74" y="160" font-family="Arial,Helvetica,sans-serif" font-size="15" font-weight="700" fill="#718196" letter-spacing="4">DOLOS SECURITY WORKBENCH</text>
+  <text x="74" y="225" font-family="Arial,Helvetica,sans-serif" font-size="54" font-weight="700" fill="#f1f5f9" letter-spacing="-2">DolosBlackMagic</text>
+  <text x="74" y="268" font-family="Arial,Helvetica,sans-serif" font-size="21" fill="#9aa8b8">Turn artifacts, logs and evidence into analyst-ready answers.</text>
+  <g font-family="Arial,Helvetica,sans-serif" font-size="12" fill="#9aa8b8">
+    <rect x="74" y="308" width="126" height="31" rx="8" fill="#0d131b" stroke="#24303d"/><text x="94" y="328">LOCAL-FIRST</text>
+    <rect x="212" y="308" width="105" height="31" rx="8" fill="#0d131b" stroke="#24303d"/><text x="233" y="328">DFIR</text>
+    <rect x="329" y="308" width="144" height="31" rx="8" fill="#0d131b" stroke="#24303d"/><text x="350" y="328">BLACKLOG</text>
+    <rect x="485" y="308" width="180" height="31" rx="8" fill="#0d131b" stroke="#24303d"/><text x="505" y="328">DETECTION STUDIO</text>
+    <rect x="677" y="308" width="157" height="31" rx="8" fill="#0d131b" stroke="#24303d"/><text x="698" y="328">SOC OPERATIONS</text>
+  </g>
+</svg>
