@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dolosblackmagic-wazuh-engine"
+version = "1.0.0"
+description = "Local-first Python analysis companion for Wazuh exports used by DolosBlackMagic"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+dbm-wazuh = "dbm_wazuh.cli:main"
+dbm-wazuh-server = "dbm_wazuh.server:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["dbm_wazuh*"]
