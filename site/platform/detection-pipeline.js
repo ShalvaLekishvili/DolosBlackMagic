@@ -17,6 +17,35 @@ function findingKey(f){return `${text(f.ruleId)}|${[...(f.eventIds||[])].map(tex
 function classify(f){if(f.correlation)return'correlated';if(['critical','high'].includes(f.severity)&&f.confidence==='high')return'high-confidence';if((severityRank[f.severity]||0)>=3)return'suspicious';return'informational'}
 function chronological(events=[]){return events.slice().sort((a,b)=>{const ta=Date.parse(a.timestamp||''),tb=Date.parse(b.timestamp||'');if(Number.isFinite(ta)&&Number.isFinite(tb)&&ta!==tb)return ta-tb;if(Number.isFinite(ta)!==Number.isFinite(tb))return Number.isFinite(ta)?-1:1;return Number(a.id||0)-Number(b.id||0)})}
 function normalizeFinding(f,sourceEngine='blacklog'){return{...f,id:text(f.id||`${sourceEngine}-${f.ruleId}-${(f.eventIds||[]).join('-')}`),ruleId:text(f.ruleId),name:text(f.name||f.ruleId||'Finding'),severity:text(f.severity||'informational'),confidence:text(f.confidence||'unknown'),mitre:Array.isArray(f.mitre)?f.mitre:[],tags:Array.isArray(f.tags)?f.tags:[],why:text(f.why||'Detection logic matched source telemetry.'),falsePositive:text(f.falsePositive),remediation:text(f.remediation),eventIds:Array.isArray(f.eventIds)?f.eventIds.map(text):[],evidence:Array.isArray(f.evidence)?f.evidence:[],sourceEngine:f.sourceEngine||sourceEngine,kind:f.kind||classify(f)}}
-function apply(result={}){registerAuthRules();const events=Array.isArray(result.events)?result.events:[],existing=(Array.isArray(result.findings)?result.findings:[]).map(f=>normalizeFinding(f,f.sourceEngine||'blacklog'));const v3=P.detectionsV3&&events.length?P.detectionsV3.runAll(chronological(events)).map(f=>normalizeFinding(f,'detection-v3')):[];const seen=new Set(),findings=[];for(const f of [...existing,...v3]){const key=findingKey(f);if(seen.has(key))continue;seen.add(key);findings.push(f)}findings.sort((a,b)=>(severityRank[b.severity]||0)-(severityRank[a.severity]||0)||text(a.name).localeCompare(text(b.name)));const byEvent=new Map();for(const f of findings)for(const id of f.eventIds||[]){const key=text(id);if(!key)continue;const arr=byEvent.get(key)||[];arr.push(f.ruleId);byEvent.set(key,arr)}for(const e of events){const refs=new Set(Array.isArray(e.detections)?e.detections.map(text):[]);for(const ruleId of byEvent.get(eventRef(e))||[])refs.add(ruleId);e.detections=[...refs]}const counts={informational:0,suspicious:0,correlated:0,'high-confidence':0};for(const f of findings)counts[f.kind]=(counts[f.kind]||0)+1;result.findings=findings;result.summary={...(result.summary||{}),detectionPipeline:{total:findings.length,builtInExisting:existing.length,v3Added:v3.length,classification:counts,authPack:AUTH_RULES.length}};P.bus?.emit('detections:evaluated',{findings,counts,v3Added:v3.length},{remember:true});return result}
-P.detectionPipeline={apply,chronological,normalizeFinding,classify,findingKey,registerAuthRules,authRules:AUTH_RULES};
+function apply(result={}){
+ registerAuthRules();
+ if(result.summary?.detectionPipeline?.canonical===true)return result;
+ const events=Array.isArray(result.events)?result.events:[];
+ const existing=(Array.isArray(result.findings)?result.findings:[]).map(f=>normalizeFinding(f,f.sourceEngine||'blacklog'));
+ const v3=P.detectionsV3&&events.length?P.detectionsV3.runAll(chronological(events)).map(f=>normalizeFinding(f,'detection-v3')):[];
+ const seen=new Set(),findings=[];
+ for(const f of [...existing,...v3]){const key=findingKey(f);if(seen.has(key))continue;seen.add(key);findings.push(f)}
+ findings.sort((a,b)=>(severityRank[b.severity]||0)-(severityRank[a.severity]||0)||text(a.name).localeCompare(text(b.name)));
+ const byEvent=new Map();
+ for(const f of findings)for(const id of f.eventIds||[]){const key=text(id);if(!key)continue;const arr=byEvent.get(key)||[];arr.push(f.ruleId);byEvent.set(key,arr)}
+ for(const e of events){const refs=new Set(Array.isArray(e.detections)?e.detections.map(text):[]);for(const ruleId of byEvent.get(eventRef(e))||[])refs.add(ruleId);e.detections=[...refs]}
+ const classification={informational:0,suspicious:0,correlated:0,'high-confidence':0};
+ const findingSeverity={critical:0,high:0,medium:0,low:0,informational:0};
+ for(const f of findings){classification[f.kind]=(classification[f.kind]||0)+1;const sev=text(f.severity||'informational').toLowerCase();findingSeverity[sev]=(findingSeverity[sev]||0)+1}
+ result.findings=findings;
+ result.summary={...(result.summary||{}),findings:findings.length,findingSeverity,detectionPipeline:{canonical:true,total:findings.length,builtInExisting:existing.length,v3Added:v3.length,classification,authPack:AUTH_RULES.length}};
+ P.bus?.emit('detections:evaluated',{findings,counts:classification,v3Added:v3.length},{remember:true});
+ return result;
+}
+function refreshUi(){
+ const result=global.DBMState?.logResult;if(!result)return;
+ const set=(id,value)=>{const el=global.document?.getElementById?.(id);if(el)el.textContent=String(value)};
+ set('logFindings',result.findings?.length||0);
+ const sev=result.summary?.findingSeverity||{};set('logCritical',Number(sev.critical||0)+Number(sev.high||0));
+ const base=global.DBMLogEngine?.RULES?.length||0,v3=P.detectionsV3?.builtins?.length||0;
+ const count=global.document?.getElementById?.('ruleCount');if(count)count.textContent=`${base+v3} active rules · v3 correlation enabled`;
+}
+function onLogAnalysis(event){const result=event?.detail?.result||global.DBMState?.logResult;if(!result)return;apply(result);if(global.DBMState)global.DBMState.logResult=result;Promise.resolve().then(refreshUi)}
+global.addEventListener?.('dbm:log-analysis',onLogAnalysis);
+P.detectionPipeline={apply,chronological,normalizeFinding,classify,findingKey,registerAuthRules,authRules:AUTH_RULES,refreshUi,onLogAnalysis};
 })(typeof window!=='undefined'?window:globalThis);
