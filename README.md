@@ -6,13 +6,13 @@
 
 **Local-first browser DFIR · Log Intelligence · Detection Engineering · Investigation · SOC Operations**
 
-[![Version](https://img.shields.io/badge/version-0.5.0-2b3645?style=flat-square)](package.json)
+[![Version](https://img.shields.io/badge/version-0.6.0-2b3645?style=flat-square)](package.json)
 [![Node](https://img.shields.io/badge/Node.js-%3E%3D24-2b3645?style=flat-square)](package.json)
 [![CI](https://img.shields.io/github/actions/workflow/status/ShalvaLekishvili/DolosBlackMagic/ci.yml?branch=main&style=flat-square&label=CI)](.github/workflows/ci.yml)
 [![Pages](https://img.shields.io/badge/GitHub%20Pages-live-2b3645?style=flat-square)](https://shalvalekishvili.github.io/DolosBlackMagic/)
 [![License](https://img.shields.io/badge/license-MIT-2b3645?style=flat-square)](LICENSE)
 
-**[Live Application](https://shalvalekishvili.github.io/DolosBlackMagic/)** · **[ქართული განმარტება](#-ქართული-განმარტება)** · **[Architecture](docs/ARCHITECTURE.md)** · **[Security](docs/SECURITY.md)**
+**[Live Application](https://shalvalekishvili.github.io/DolosBlackMagic/)** · **[ქართული განმარტება](#-ქართული-განმარტება)** · **[Architecture](docs/ARCHITECTURE.md)** · **[Security](docs/SECURITY.md)** · **[v0.6 Release](docs/V0.6.md)**
 
 </div>
 
@@ -20,175 +20,80 @@
 
 ## What is DolosBlackMagic?
 
-DolosBlackMagic is a **privacy-first, browser-based security investigation workbench** designed for analysts who need to inspect artifacts, normalize heterogeneous logs, evaluate rule-based detections, correlate evidence and preserve investigation state without sending data to a mandatory backend.
+DolosBlackMagic 0.6.0 is a **privacy-first, browser-based DFIR/SOC analyst workstation** for local artifact inspection, heterogeneous log normalization, evidence-driven detections, investigation correlation, incident handling and reporting. It remains lightweight and static-hosting friendly: core analysis happens in the browser and no mandatory cloud backend, account, telemetry or analytics service is required.
 
-It is intentionally lightweight and static-hosting friendly. Core analysis happens in the browser, making the project suitable for **GitHub Pages, Netlify and local HTTP hosting**.
+> DolosBlackMagic is analyst-assistance software — not an antivirus, EDR, malware sandbox, full SIEM backend, exploit framework or authoritative threat-intelligence verdict system.
 
-> **Important:** DolosBlackMagic is analyst-assistance software. It is not an antivirus, EDR, malware sandbox, full SIEM backend, exploit framework or authoritative threat-intelligence verdict system.
+## Workstation map
 
----
-
-## Product map
-
-| Workspace | Purpose | Key capabilities |
+| Workspace | Analyst purpose | Key capabilities |
 |---|---|---|
-| **Overview** | Analyst landing workspace | local workspace health, quick actions, investigation status |
-| **Artifact Analysis** | Local artifact inspection | SHA-256/SHA-1, signatures, entropy, strings, IOC extraction, behavior heuristics |
-| **Event Explorer / BlackLog** | Heterogeneous telemetry analysis | format detection, normalization, search, filtering, data-quality accounting |
-| **Detection Studio** | Rule engineering | custom rules, lifecycle, testing, Sigma-like and Wazuh imports |
-| **SOC Operations** | Analyst operations | deduplication, suppression, triage, risk context, workspace portability |
-| **Investigation Graph** | Relationship analysis | hosts, users, IPs, processes, domains, URLs, hashes and findings |
-| **Case Timeline** | Chronological analysis | normalized investigation events and evidence ordering |
-| **Indicators** | IOC review | URL, domain, IP, email and hash extraction/defanging |
-| **Investigations** | Local case library | browser-local persistence and analyst workflow |
-| **Reports** | Case handoff | Markdown, JSON and printable/PDF-ready reporting |
+| **Overview** | Current workspace state | investigation pulse, quick actions, local state |
+| **Artifact Analysis** | Inspect local evidence | hashes, signatures, entropy, strings, IOC extraction, heuristic context |
+| **Event Explorer / BlackLog** | Analyze telemetry | content-based parsing, normalization, filtering, data-quality accounting |
+| **Detection Studio** | Engineer rules | lifecycle, testing, safe regex, Sigma-like and Wazuh imports |
+| **SOC Operations** | Triage and organize | findings, suppression, incidents, entity correlation, snapshots |
+| **Investigation Graph** | Explore relationships | hosts, users, IPs, processes, domains, URLs, hashes, findings |
+| **Case Timeline** | Order evidence | normalized event chronology and investigation context |
+| **Indicators** | Review IOCs | extraction and defanging |
+| **Investigations** | Preserve local cases | browser-local analyst workflow |
+| **Reports** | Handoff findings | Markdown, JSON and print/PDF-ready output |
 
----
+## v0.6 workstation release
+
+0.6.0 stabilizes the current workstation generation. It includes the premium SOC/DFIR visual layer, analyst-oriented overview, background Web Worker analysis for larger log payloads, cancellable analysis, bounded event rendering, debounced filtering, stronger deployment integrity and a bilingual project landing page.
+
+The release also removes an important consistency problem: `package.json` is now the canonical release source used by static integrity checks, while PWA and README release references are validated against it. See [`docs/V0.6.md`](docs/V0.6.md).
 
 ## Architecture at a glance
 
 ```text
-                    ┌──────────────────────────┐
-                    │     Browser / Analyst    │
-                    └────────────┬─────────────┘
-                                 │
-                  Local files / logs / text / JSON
-                                 │
-          ┌──────────────────────▼──────────────────────┐
-          │             DolosBlackMagic UI             │
-          │  Artifact • Events • Detection • SOC Ops   │
-          └──────────────┬───────────────┬──────────────┘
-                         │               │
-              ┌──────────▼──────┐  ┌────▼─────────────┐
-              │ Analysis Engines│  │ Browser Storage  │
-              │ Core / BlackLog │  │ Cases / Rules /  │
-              │ SOC / Operations│  │ Triage / Views   │
-              └──────────┬──────┘  └──────────────────┘
-                         │
-                 Findings / Evidence
-                         │
-        ┌────────────────▼────────────────┐
-        │ Investigation → Incident → Report│
-        └─────────────────────────────────┘
+Local artifact / log / text
+          │
+          ▼
+┌──────────────────────────────┐
+│   Browser analyst workspace  │
+│ Artifact · Events · SOC Ops  │
+└──────────────┬───────────────┘
+               │
+      ┌────────▼────────┐
+      │ Analysis engines│
+      │ Core / BlackLog │
+      │ SOC / Operations│
+      └────────┬────────┘
+               │
+      Findings + Evidence
+               │
+ Investigation → Incident → Report
 
-             No mandatory cloud backend
-             No analytics / telemetry
-             No automatic sample upload
+No mandatory backend · No telemetry · No automatic sample upload
 ```
 
-The engines and UI are deliberately separated. Imported artifacts and rules are treated as **data**, not executable content.
+For large pasted telemetry, Event Explorer can move analysis to `log-worker.js`, keeping the main UI responsive. The current worker is a background full-payload analyzer; true chunked/streaming file ingestion is a v0.7 engineering target and is not overclaimed here.
 
----
+## BlackLog ingestion
 
-## BlackLog — supported ingestion
+Content heuristics are used in addition to file extensions. Supported or best-effort telemetry includes JSON, NDJSON/JSONL, CSV, RFC3164/RFC5424 Syslog, CEF, LEEF, `key=value`, Windows-style events, Wazuh-style JSON, Linux authentication, firewall/network logs, common web access logs and generic plaintext.
 
-DolosBlackMagic uses **content heuristics**, not only file extensions, to classify telemetry.
-
-Supported or best-effort formats include:
-
-- JSON
-- NDJSON / JSONL
-- CSV
-- RFC3164 Syslog
-- RFC5424 Syslog
-- CEF
-- LEEF
-- `key=value` telemetry
-- Windows-style exported events
-- Wazuh-style JSON
-- Linux authentication logs
-- firewall/network logs
-- common web/access logs
-- generic plaintext
-
-Unknown or malformed records degrade gracefully where possible. The ingestion pipeline tracks:
-
-`total → parsed → partial → malformed → dropped`
-
-The design goal is **zero silent drops**. Unsupported records should remain visible to the analyst instead of disappearing without explanation.
-
-> “Any log” means broad **best-effort ingestion**. DolosBlackMagic does not claim vendor-perfect semantic support for every proprietary log source.
-
----
+The parser tracks `total → parsed → partial → malformed → dropped`, with a design goal of **zero silent drops**. Unknown telemetry is preserved where safe and clearly classified instead of being silently discarded.
 
 ## Detection engineering
 
-Built-in defensive detection content covers practical analyst-assistance patterns across:
+Built-in defensive rules cover Windows/Sysmon, Linux authentication, network/firewall and common web-abuse patterns. Findings can carry severity, confidence, MITRE ATT&CK context, firing explanation, evidence, remediation guidance and false-positive notes. A heuristic match is not treated as a confirmed malicious verdict.
 
-**Windows / Sysmon** — failed authentication, suspicious PowerShell, encoded commands, audit clearing, service installation, account/group changes, scheduled tasks, LOLBins, credential-access indicators and process/network telemetry.
+Detection Studio keeps custom rules declarative. Rules are never executed as JavaScript and the project does not use `eval()` or `new Function()` for detection logic. Sigma-like YAML and Wazuh XML importers expose unsupported or partial translation instead of silently changing rule meaning.
 
-**Linux** — SSH authentication abuse, sudo failures, cron persistence indicators and unusual authentication behavior.
+## Privacy & security model
 
-**Network / Firewall** — repeated denies, multi-port scanning behavior and suspicious administrative-service activity.
+- no mandatory account or backend;
+- no analytics or hidden telemetry;
+- no automatic hash/IP/domain/file submission;
+- uploaded artifacts are not executed;
+- imported rules remain data;
+- browser-local analyst state can be explicitly exported/restored;
+- Netlify deployment includes CSP and baseline privacy/security headers.
 
-**Web** — SQL injection probes, path traversal and common command/web-shell style probes.
-
-Findings can include:
-
-- severity;
-- analyst-friendly confidence;
-- MITRE ATT&CK mapping;
-- explanation of **why the finding fired**;
-- source event references/evidence;
-- remediation guidance;
-- likely false-positive context.
-
-A heuristic match is not automatically labelled as confirmed malicious activity.
-
----
-
-## Detection Studio
-
-Custom rules remain declarative data and are never dynamically executed as JavaScript.
-
-Rule lifecycle:
-
-```text
-Draft → Test → Enabled → Disabled → Archived
-```
-
-Supported condition concepts include:
-
-- equals / not equals
-- contains
-- starts with / ends with
-- regex with browser-safety validation
-- existence checks
-- numeric comparisons
-- membership checks
-- NOT logic
-
-Rules can be tested against currently loaded telemetry before they are enabled.
-
-### Sigma-like / Wazuh import
-
-Imports are classified instead of silently changing meaning:
-
-- **fully translated**
-- **partially translated**
-- **unsupported**
-- **invalid**
-
-Imported Sigma-like YAML and Wazuh XML are parsed as data. Unsupported constructs are surfaced to the analyst.
-
----
-
-## Privacy model
-
-DolosBlackMagic is intentionally **local-first**.
-
-- No mandatory user account
-- No mandatory backend
-- No third-party analytics
-- No telemetry collection
-- No hidden file upload
-- No automatic threat-intelligence submission
-- Uploaded artifacts are never executed
-- Detection rules are never evaluated with `eval` or `new Function`
-
-Analyst state is stored in browser-controlled storage and can be explicitly exported/restored through the workspace tools.
-
-The browser profile and endpoint remain part of the security boundary. Highly sensitive investigations should be performed in a trusted browser profile on a managed endpoint.
+The browser profile and endpoint remain part of the trust boundary.
 
 ---
 
@@ -196,301 +101,99 @@ The browser profile and endpoint remain part of the security boundary. Highly se
 
 ## რა არის DolosBlackMagic?
 
-**DolosBlackMagic** არის ბრაუზერზე დაფუძნებული, local-first ტიპის **DFIR / SOC სამუშაო გარემო**, რომლის მთავარი მიზანია უსაფრთხოების ანალიტიკოსს მისცეს ერთ სივრცეში არტეფაქტების, ლოგების, დეტექციების, IOC-ების, ინციდენტებისა და გამოძიებების დამუშავების შესაძლებლობა.
+**DolosBlackMagic 0.6.0** არის ბრაუზერზე დაფუძნებული, local-first ტიპის **DFIR / SOC ანალიტიკოსის სამუშაო გარემო**. მისი მიზანია ერთ სივრცეში გააერთიანოს არტეფაქტის ანალიზი, სხვადასხვა ტიპის ლოგების დამუშავება, დეტექციები, evidence, IOC-ები, entity correlation, ინციდენტები და ანგარიშგება.
 
-პროექტის ერთ-ერთი მთავარი პრინციპია **მონაცემების ლოკალურად დამუშავება**. ჩვეულებრივ სამუშაო პროცესში ფაილები და ლოგები არ იგზავნება სავალდებულო cloud backend-ზე — ანალიზის ძირითადი ნაწილი უშუალოდ ბრაუზერში სრულდება.
+პროექტის მთავარი პრინციპია **კონფიდენციალურობა და ლოკალური დამუშავება**: ჩვეულებრივ სამუშაო პროცესში უსაფრთხოების მონაცემები არ საჭიროებს სავალდებულო cloud backend-ზე ატვირთვას. ძირითადი ანალიზი მომხმარებლის ბრაუზერში სრულდება.
 
-ეს განსაკუთრებით გამოსადეგია:
+### ძირითადი შესაძლებლობები
 
-- SOC Analyst-ისთვის;
-- DFIR გამოძიებებისთვის;
-- Wazuh / Sysmon / Windows Event ლოგების საწყისი ანალიზისთვის;
-- Detection Engineering სწავლებისა და პრაქტიკისთვის;
-- ინციდენტის evidence-ის დასალაგებლად;
-- უსაფრთხოების ლაბორატორიული გარემოსთვის;
-- მცირე local-first SOC tooling-ისთვის.
+**Artifact Analysis** — SHA-256/SHA-1, ფაილის signature, entropy, printable strings, IOC extraction/defanging, heuristic behavior context, timeline/graph და ანგარიშის მომზადება.
 
-### რას **არ** წარმოადგენს პროექტი
+**BlackLog / Event Explorer** — JSON, NDJSON, CSV, Syslog, CEF, LEEF, key=value, Wazuh, Windows, Linux, firewall, web-access და generic plaintext ლოგების best-effort ამოცნობა, normalization, ძებნა და filtering. malformed ჩანაწერები შეძლებისდაგვარად ინახება და parse quality ცალკე ჩანს.
 
-DolosBlackMagic არ არის სრული SIEM backend, EDR, ანტივირუსი, malware sandbox ან ავტომატური malware verdict სისტემა. მისი დეტექციები წარმოადგენს **ანალიტიკოსის დამხმარე წესებსა და ჰეურისტიკებს**, ამიტომ საბოლოო გადაწყვეტილება ყოველთვის კონტექსტისა და evidence-ის გადამოწმებას საჭიროებს.
+**Detection Studio** — defensive detection rule-ების შექმნა, ტესტირება და lifecycle მართვა. მხარდაჭერილია safe regex validation და Sigma-like/Wazuh import-ის ნაწილობრივი თარგმნის მკაფიო ანგარიში. წესები JavaScript კოდად არ სრულდება.
 
----
+**SOC Operations** — finding triage, suppression/deduplication, incident workflow, entity correlation, data-quality context და workspace snapshot export/restore.
 
-## ძირითადი მოდულები
+**Investigation workflow** — ანალიტიკოსს შეუძლია artifact/log evidence-ის დალაგება, IOC-ზე pivot, finding-ის evidence-ის ნახვა, incident-ის შექმნა და Markdown/JSON/Print-PDF ანგარიშის მომზადება.
 
-### 1. Artifact Analysis
+### v0.6-ში რა შეიცვალა?
 
-შეგიძლია ბრაუზერში დაამუშაო ფაილი ან ტექსტური არტეფაქტი და მიიღო:
+v0.6 არის workstation თაობის სტაბილიზებული release: გაუმჯობესებულია პროფესიონალური SOC/DFIR ინტერფეისი, Overview, დიდი log payload-ის background Web Worker analysis, cancellation, bounded rendering, debounced filtering, PWA/static integrity და GitHub README. release metadata ახლა `package.json`-ის ვერსიას ეყრდნობა და integrity test ამოწმებს, რომ README/PWA მას არ აცდეს.
 
-- SHA-256 / SHA-1 hash;
-- ფაილის ტიპის signature კლასიფიკაცია;
-- entropy შეფასება;
-- printable strings;
-- IOC extraction;
-- URL/IP/domain/email/hash defanging;
-- საეჭვო command/behavior heuristic scoring;
-- MITRE ATT&CK hint-ები;
-- JSON/NDJSON timeline;
-- investigation graph;
-- Markdown / JSON / PDF-ready report.
+### რას არ წარმოადგენს პროექტი?
 
-არტეფაქტი **არ სრულდება** და კოდი ავტომატურად არ ეშვება.
+DolosBlackMagic **არ არის** ანტივირუსი, EDR, malware sandbox, სრული SIEM backend ან exploit framework. დეტექციები არის ანალიტიკოსის დამხმარე წესები და ჰეურისტიკები; საბოლოო შეფასება ყოველთვის evidence-სა და გარემოს კონტექსტს უნდა დაეყრდნოს.
 
-### 2. Event Explorer / BlackLog
+### უსაფრთხოება და კონფიდენციალურობა
 
-BlackLog არის heterogeneous log ingestion და normalization engine.
-
-მისი ამოცანაა სხვადასხვა ტიპის ლოგი გადაიყვანოს საერთო schema-ში, რათა შემდეგ შესაძლებელი გახდეს ძებნა, filtering, detection და correlation.
-
-სისტემა ცდილობს ამოიცნოს და დაამუშაოს:
-
-`JSON · NDJSON · CSV · Syslog · CEF · LEEF · key=value · Windows/Wazuh-style telemetry · Linux auth · firewall · web logs · plaintext`
-
-არასწორი ჩანაწერის აღმოჩენისას მთელი ფაილი აღარ უნდა ჩავარდეს. parse-quality counters გვაჩვენებს რამდენი ჩანაწერია სრულად დამუშავებული, ნაწილობრივ ნორმალიზებული, malformed ან დაკარგული.
-
-### 3. Detection Studio
-
-Detection Studio-ში შესაძლებელია საკუთარი წესების შექმნა და არსებული telemetry-ის წინააღმდეგ გამოცდა.
-
-Rule lifecycle:
-
-`Draft → Test → Enabled → Disabled → Archived`
-
-მხარდაჭერილია equality, contains, prefix/suffix, regex, existence, numeric comparison და NOT ტიპის პირობები.
-
-Regex წესებზე დამატებულია browser-safety შემოწმება, რათა აშკარად პრობლემურმა expression-მა ინტერფეისი არ დაბლოკოს.
-
-### 4. Alert Triage და Incident Workflow
-
-Finding-ებისთვის შესაძლებელია სტატუსების გამოყენება:
-
-`New · Investigating · Benign · Escalated · Closed`
-
-ასევე ინახება analyst note, status history, disposition და severity override metadata.
-
-Finding-ები და შესაბამისი event-ები შეიძლება გადაიქცეს incident-ად, სადაც ინახება evidence, entities, timeline, MITRE context და analyst notes.
-
-### 5. SOC Operations
-
-Operations workspace გამოიყენება:
-
-- repeated finding deduplication-ისთვის;
-- suppression rule-ებისთვის;
-- noise reduction-ისთვის;
-- data quality health-ისთვის;
-- high-interest event enrichment-ისთვის;
-- investigation entity correlation-ისთვის;
-- workspace backup / restore-ისთვის.
-
-### 6. Investigation Graph
-
-Graph layer აკავშირებს გამოძიებაში მნიშვნელოვან entity-ებს:
-
-`Host ↔ User ↔ IP ↔ Process ↔ Domain ↔ URL ↔ Hash ↔ Finding ↔ Incident`
-
-Graph intentionally bounded არის, რათა დიდი telemetry-ის დროს UI უსარგებლო node clutter-ად არ გადაიქცეს.
-
----
-
-## უსაფრთხოება და კონფიდენციალურობა
-
-პროექტი შექმნილია privacy-first მიდგომით:
-
-- არ აქვს სავალდებულო backend;
-- არ აქვს analytics/tracking;
-- არ ითხოვს ანგარიშს;
-- არ აგზავნის ფაილებს ავტომატურად გარე API-ზე;
-- imported HTML/log content უნდა გამოჩნდეს როგორც ტექსტი და არა executable markup;
-- არ გამოიყენება `eval` ან `new Function` imported detection rule-ებისთვის;
-- workspace restore მხოლოდ DolosBlackMagic-ის საკუთარ namespace-ებს იღებს;
-- Netlify deployment-ზე დამატებულია CSP და browser permission restrictions.
-
----
-
-## სწრაფი გაშვება
-
-### Local HTTP
-
-```bash
-git clone https://github.com/ShalvaLekishvili/DolosBlackMagic.git
-cd DolosBlackMagic
-npm run serve
-```
-
-შემდეგ გახსენი:
-
-```text
-http://127.0.0.1:8080
-```
-
-Node.js **24 ან უფრო ახალი** ვერსიაა რეკომენდებული ტესტებისთვის.
-
-### ტესტირება
-
-```bash
-npm test
-```
-
-ტესტები ამოწმებს artifact analysis-ს, log parsers/normalization-ს, detection/correlation-ს, SOC persistence-ს, operations logic-ს, regex safety-სა და static deployment integrity-ს.
+პროექტი არ აგზავნის ლოგებს, ფაილებს, hash-ებს, IP-ებს ან domain-ებს მესამე მხარეს ავტომატურად. არ არის სავალდებულო account, analytics ან telemetry. მიუხედავად ამისა, browser profile და endpoint თვითონაც უსაფრთხოების საზღვრის ნაწილია, ამიტომ მგრძნობიარე გამოძიებისთვის გამოყენებული გარემო სანდო უნდა იყოს.
 
 ---
 
 ## Run locally
 
+Requires **Node.js 24+** for tests. Runtime itself is static browser content.
+
 ```bash
-git clone https://github.com/ShalvaLekishvili/DolosBlackMagic.git
-cd DolosBlackMagic
-npm run serve
+python3 -m http.server 8080 -d site
 ```
 
-Open:
-
-```text
-http://127.0.0.1:8080
-```
-
-No npm runtime dependencies are required for the application itself.
-
----
+Open `http://127.0.0.1:8080`.
 
 ## Test
-
-Node.js **24+**:
 
 ```bash
 npm test
 ```
 
-The regression suite covers:
+The regression entry point covers artifact analysis, log parsing/normalization, detections/correlation, SOC persistence, operations/workspace validation, regex safety and static deployment integrity.
 
-- artifact analysis;
-- malformed and valid log parsing;
-- normalization;
-- Unicode / Georgian text handling;
-- correlation boundaries;
-- detection rule lifecycle/imports;
-- SOC incident persistence;
-- operations/workspace validation;
-- regex safety;
-- static asset / PWA integrity.
-
----
-
-## Deployment
+## Deploy
 
 ### GitHub Pages
 
-The repository includes a Pages workflow that tests the project before deployment.
-
-```text
-.github/workflows/pages.yml
-```
-
-Production:
-
-**https://shalvalekishvili.github.io/DolosBlackMagic/**
-
-The application uses relative asset paths so the GitHub Pages project subpath `/DolosBlackMagic/` remains supported.
+`.github/workflows/pages.yml` runs the regression suite before deploying `site/`. Relative asset paths keep the application compatible with `/DolosBlackMagic/`.
 
 ### Netlify
 
-`netlify.toml` publishes the `site/` directory and applies baseline CSP/security/privacy headers.
+`netlify.toml` publishes `site/` and applies CSP plus baseline security/privacy headers.
 
----
-
-## Repository structure
+## Project structure
 
 ```text
 DolosBlackMagic/
 ├── site/
 │   ├── index.html
-│   ├── app.css
-│   ├── log.css
-│   ├── soc.css
-│   ├── ops.css
-│   ├── v05.css
-│   ├── v06-ui.css
-│   ├── core.js
-│   ├── log-engine.js
-│   ├── soc-engine.js
-│   ├── ops-engine.js
-│   ├── security-runtime.js
-│   ├── app.js
-│   ├── log-ui.js
-│   ├── soc-ui.js
-│   ├── ops-ui.js
-│   ├── ui-hardening.js
-│   ├── dashboard-v06.js
-│   ├── manifest.webmanifest
-│   └── sw.js
+│   ├── app.css / log.css / soc.css / ops.css
+│   ├── v05.css / v06-ui.css
+│   ├── core.js / app.js
+│   ├── log-engine.js / log-ui.js / log-worker.js
+│   ├── soc-engine.js / soc-ui.js / soc-v05-ui.js
+│   ├── ops-engine.js / ops-ui.js
+│   ├── security-runtime.js / ui-hardening.js
+│   ├── dashboard-v06.js / log-normalize-fixes.js
+│   └── manifest.webmanifest / sw.js / favicon.svg
 ├── tests/
-│   ├── core.test.mjs
-│   ├── log-engine.test.mjs
-│   ├── soc.test.mjs
-│   ├── ops.test.mjs
-│   └── security.test.mjs
-├── scripts/
-│   └── check-static.mjs
+├── scripts/check-static.mjs
 ├── docs/
-│   ├── assets/
-│   ├── ARCHITECTURE.md
-│   ├── DETECTIONS.md
-│   ├── LOG_FORMATS.md
-│   ├── PRIVACY.md
-│   ├── SECURITY.md
-│   ├── TESTING.md
-│   └── V0.5.md
 ├── .github/workflows/
-│   ├── ci.yml
-│   └── pages.yml
 ├── netlify.toml
-├── package.json
-├── LICENSE
-└── README.md
+└── package.json
 ```
 
----
+Version-specific enhancement files are still present in 0.6.0. They are being consolidated incrementally rather than removed through a risky rewrite.
 
-## Professional documentation
+## Documentation
 
-| Document | Content |
-|---|---|
-| [`ARCHITECTURE.md`](docs/ARCHITECTURE.md) | runtime boundaries, engines, storage and state flow |
-| [`LOG_FORMATS.md`](docs/LOG_FORMATS.md) | supported log formats and normalization expectations |
-| [`DETECTIONS.md`](docs/DETECTIONS.md) | detection model, confidence and analyst guidance |
-| [`SECURITY.md`](docs/SECURITY.md) | client-side hardening and trust boundaries |
-| [`PRIVACY.md`](docs/PRIVACY.md) | local-first privacy model |
-| [`TESTING.md`](docs/TESTING.md) | regression and static integrity testing |
-| [`V0.5.md`](docs/V0.5.md) | v0.5 release notes |
-
----
-
-## Engineering principles
-
-DolosBlackMagic follows a few strict product rules:
-
-**Evidence over visual noise.** Findings should explain why they exist.
-
-**Privacy over unnecessary connectivity.** Local analysis is the default.
-
-**Best-effort parsing over silent loss.** Unknown telemetry should degrade gracefully.
-
-**Detections assist analysts.** Weak heuristics are not presented as confirmed compromise.
-
-**No fake AI.** Deterministic scoring is described as heuristic/risk/correlation scoring.
-
-**No placeholder SOC data.** Empty workspaces stay honestly empty until real telemetry is loaded.
-
----
+- [`ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+- [`LOG_FORMATS.md`](docs/LOG_FORMATS.md)
+- [`DETECTIONS.md`](docs/DETECTIONS.md)
+- [`SECURITY.md`](docs/SECURITY.md)
+- [`PRIVACY.md`](docs/PRIVACY.md)
+- [`TESTING.md`](docs/TESTING.md)
+- [`V0.6.md`](docs/V0.6.md)
 
 ## License
 
-Released under the [MIT License](LICENSE).
-
-<div align="center">
-
-### DolosBlackMagic
-
-**Turn artifacts and logs into answers — locally.**
-
-</div>
+MIT
