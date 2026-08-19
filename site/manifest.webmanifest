@@ -1,1 +1,14 @@
-{"name":"DolosBlackMagic","short_name":"BlackMagic","start_url":"./","display":"standalone","background_color":"#080808","theme_color":"#080808","icons":[{"src":"favicon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]}
+{
+  "id": "./",
+  "name": "DolosBlackMagic",
+  "short_name": "BlackMagic",
+  "description": "Local-first browser DFIR, log intelligence, detection engineering and SOC investigation workbench.",
+  "lang": "en",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#080808",
+  "theme_color": "#080808",
+  "categories": ["security", "productivity", "utilities"],
+  "icons": [{"src":"favicon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+}
