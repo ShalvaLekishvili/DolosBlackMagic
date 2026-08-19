@@ -1,27 +1,52 @@
 # Testing and quality gates
 
-DolosBlackMagic requires Node.js 24+ and intentionally has no runtime npm package dependencies.
+DolosBlackMagic v0.10 validates both the static browser workstation and the optional Python Wazuh companion.
+
+## Browser/core tests
+
+Requires Node.js 24+:
 
 ```bash
 npm test
 ```
 
-The command runs these suites sequentially:
+The browser suite covers artifact primitives, BlackLog parsing/normalization, Wazuh browser adapters, authentication correlations, SOC state, Operations, regex safety, investigation/evidence provenance, streaming, Dataset Vault, Detection Engine v3 and static/PWA integrity.
 
-- `core.test.mjs` — artifact-analysis primitives.
-- `log-engine.test.mjs` — format detection, malformed-record preservation, CSV/syslog parsing, Unicode, timestamp quality, normalization and defensive correlations.
-- `soc.test.mjs` — browser-state migration, custom rules, import reports, triage and incident persistence/reporting.
-- `ops.test.mjs` — deduplication, suppression, enrichment, graph, workspace validation and dashboard health.
-- `security.test.mjs` — analyst-controlled regex safety.
-- `platform.test.mjs` — investigation lifecycle, evidence provenance, Detection Engine v3 grouped/sequence behavior and canonical finding integration.
-- `streaming.test.mjs` — worker protocol, bounded Blob slicing, UTF-8 streaming decode and provenance invariants.
-- `storage.test.mjs` — Dataset Vault sanitization, bounds, cyclic raw-event handling and portable import rebinding.
-- `detection-pipeline.test.mjs` — v0.9 merge/deduplication, classification, event back-linking, repeated-stage sequences and missing-group safeguards.
-- `check-static.mjs` — deployable asset existence, production JavaScript syntax parsing, HTML references, duplicate IDs, navigation targets, PWA cache membership, version alignment, bilingual README and Netlify CSP.
+`check-static.mjs` additionally parses every production JavaScript file for syntax errors and verifies required assets, HTML references, PWA cache membership, version alignment, bilingual README content and Netlify CSP presence.
+
+## Python Wazuh engine tests
+
+Requires Python 3.11+; CI uses Python 3.12.
+
+```bash
+npm run test:python
+```
+
+Equivalent direct command:
+
+```bash
+cd python-engine
+python3 -m unittest discover -s tests -v
+```
+
+The Python suite currently verifies:
+
+- OpenSearch `_source` Wazuh agent-stopped alert handling;
+- strict separation of Wazuh alert ID / Wazuh rule ID / Windows Event ID;
+- Windows Event 4625 target-vs-subject identity normalization;
+- agent IP vs observed authentication source IP semantics;
+- password-spray correlation;
+- malformed NDJSON preservation with zero silent drops;
+- multi-port scan correlation.
 
 ## CI
 
-Both `.github/workflows/ci.yml` and the GitHub Pages workflow run `npm test` on Node 24. Pages deployment is gated by a successful test job.
+`.github/workflows/ci.yml` runs:
+
+1. Node.js 24 browser regression/static-integrity tests;
+2. Python 3.12 Wazuh-engine unit tests.
+
+A failed browser or Python suite blocks the CI job.
 
 ## Manual browser smoke test
 
@@ -30,34 +55,20 @@ After serving `site/`, verify:
 1. Overview loads without console errors.
 2. Artifact sample analysis works.
 3. Event Explorer ingests telemetry and displays parse quality.
-4. Line-oriented file ingestion uses the streaming path and reports measurable progress.
-5. Cancel stops active analysis without committing a partial result.
-6. Event rows open the evidence drawer and render raw/normalized context safely.
-7. Detection Engine v3 findings appear automatically alongside BlackLog findings.
-8. Finding evidence event IDs link back to normalized events.
-9. Missing correlation group keys do not create unrelated findings.
-10. Repeated-failure → success sequences require the configured failure burst.
-11. Investigation snapshots validate before restore.
-12. Dataset Vault save/open/export/import/delete flows work without network access.
-13. Imported datasets are revalidated and re-sanitized.
-14. Mobile sidebar, evidence drawer, investigation workspace and Dataset Vault remain usable.
-15. Markdown/JSON/print exports continue to work.
+4. Browser Wazuh normalization works with direct alerts and Indexer exports.
+5. Python Engine panel reports `OFFLINE` when the local service is not running and does not break browser analysis.
+6. Start `python3 -m dbm_wazuh.server`; panel changes to `ONLINE`.
+7. **Deep analyze current log** returns Python-normalized event/finding metrics.
+8. Python finding inspection shows explanation, remediation, false-positive context and evidence.
+9. Python result JSON export works.
+10. Line-oriented browser ingestion still uses the streaming path.
+11. Investigation, Dataset Vault and report exports remain functional.
+12. Mobile layout remains usable with the Python panel present.
 
 ## Performance model
 
-The chunked file reader and worker protocol keep line-oriented telemetry parsing off the main thread. Dataset persistence is opt-in and bounded. Correlations use bounded windows and explicit grouping rather than unbounded cross-product scans.
-
-Additional controls include:
-
-- sliding-window correlation;
-- cached event search strings;
-- debounced filtering;
-- bounded DOM rendering;
-- bounded investigation graphs;
-- bounded streamed event retention;
-- bounded persisted previews and long fields;
-- 30 MB portable dataset import guard.
+Browser line-oriented telemetry uses bounded Blob slices and Web Workers. Python HTTP requests are capped at 64 MB. Correlations use bounded windows and explicit grouping, avoiding unbounded all-pairs analysis.
 
 ## Known test boundary
 
-The repository relies primarily on Node regression and static-integrity tests. IndexedDB transaction behavior and full UI interaction still require browser smoke validation because Node does not provide the production browser storage implementation.
+Full localhost-browser networking, IndexedDB transaction behavior and responsive interaction remain browser smoke-test concerns; Node/Python unit suites do not emulate a production browser security model.
