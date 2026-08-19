@@ -1,51 +1,97 @@
-# DolosBlackMagic v0.9 Architecture
+# DolosBlackMagic v0.10 Architecture
 
-DolosBlackMagic is a static, local-first browser application. `site/` is the deployable artifact; no mandatory server runtime is required for the core product.
+DolosBlackMagic remains a static, local-first browser application. `site/` is the deployable artifact and no mandatory server runtime is required for the core product. v0.10 adds an **optional analyst-side Python Wazuh companion** for deeper parsing and correlation while preserving browser-only operation.
 
 ## Architectural direction
 
-v0.9 keeps the semantic `site/platform/` layer and makes Detection Engine v3 part of the canonical telemetry path instead of an isolated capability. Existing compatibility modules remain in place while stable behavior is consolidated behind tested platform APIs.
+The browser platform remains canonical for artifact analysis, investigations, SOC operations, persistence and reporting. The Python engine is a bounded local service that specializes in Wazuh exports and returns normalized events/findings to a dedicated Event Explorer panel.
 
-## Layers
+## Browser layers
 
 1. **Artifact core** — `core.js` performs hashing, type detection, strings/entropy, IOC extraction, artifact heuristics, decoding, graph/timeline preparation and report generation.
 2. **BlackLog compatibility engine** — `log-engine.js` detects formats, parses records, normalizes events and applies built-in defensive detections.
-3. **Platform bus** — `platform/app-bus.js` provides dependency-free cross-workspace state/event contracts.
-4. **Investigation model** — `platform/investigation-engine.js` stores compact investigations, evidence bookmarks, findings, entities, notes, actions and source references.
-5. **Detection Engine v3** — `platform/detection-v3.js` provides nested declarative conditions, thresholds, distinct counts, grouped correlations and bounded sequences.
-6. **Canonical detection pipeline** — `platform/detection-pipeline.js` combines existing BlackLog findings with v3 findings, deduplicates equivalent evidence, links detections back to events and assigns analyst-facing finding classifications.
-7. **Streaming telemetry pipeline** — `platform/log-stream-client.js` reads bounded Blob slices and sends chunks to `platform/log-stream-worker.js`, which reconstructs line boundaries and returns measurable progress plus a bounded event collection.
-8. **Evidence interaction** — `platform/event-explorer-v2.js` adds stable event references, provenance, raw/normalized comparison, entity pivots and evidence bookmarks.
-9. **Workspace storage service** — `platform/workspace-store.js` owns IndexedDB dataset persistence, schema validation, sanitization, size/event bounds and browser quota helpers.
-10. **Dataset Vault UI** — `platform/dataset-vault-ui.js` exposes explicit save/open/export/import/delete actions for selected telemetry.
-11. **Bootstrap** — `platform/bootstrap.js` initializes cross-workspace behavior, streaming analysis and the shared renderer. Before telemetry is rendered, it applies the canonical detection pipeline.
-12. **SOC/Operations compatibility** — existing SOC and Operations engines remain operational while consolidation continues.
-13. **PWA/deployment** — `sw.js`, `manifest.webmanifest`, GitHub Actions and `netlify.toml` provide static deployment and offline application-shell behavior.
+3. **Wazuh browser adapter** — `wazuh-adapter.js` unwraps common Wazuh/Indexer structures and preserves Wazuh-specific metadata.
+4. **Platform bus** — `platform/app-bus.js` provides dependency-free cross-workspace contracts.
+5. **Investigation model** — `platform/investigation-engine.js` stores compact investigations, evidence bookmarks, findings, entities, notes, actions and source references.
+6. **Detection Engine v3** — `platform/detection-v3.js` provides nested declarative conditions, thresholds, distinct counts, grouped correlations and bounded sequences.
+7. **Canonical browser detection pipeline** — `platform/detection-pipeline.js` merges existing BlackLog findings with v3 findings and links detections back to events.
+8. **Streaming telemetry pipeline** — `platform/log-stream-client.js` + `platform/log-stream-worker.js` process line-oriented telemetry in bounded chunks.
+9. **Evidence interaction** — `platform/event-explorer-v2.js` adds stable event references, provenance, raw/normalized comparison, pivots and bookmarks.
+10. **Workspace storage service** — `platform/workspace-store.js` owns IndexedDB dataset persistence, validation, sanitization and bounds.
+11. **Dataset Vault UI** — `platform/dataset-vault-ui.js` exposes explicit save/open/export/import/delete actions.
+12. **Python engine client** — `platform/python-engine-client.js` detects the local companion, sends analyst-selected Wazuh payloads to localhost, and renders Python findings without making the hosted application backend-dependent.
+13. **SOC/Operations compatibility** — existing SOC and Operations engines remain operational while consolidation continues.
+14. **PWA/deployment** — `sw.js`, `manifest.webmanifest`, GitHub Actions and `netlify.toml` provide static deployment and offline application-shell behavior.
 
-## Canonical telemetry flow
+## Python Wazuh companion
+
+`python-engine/dbm_wazuh/` contains a dependency-light local analysis service:
 
 ```text
-Artifact / Telemetry
-       ↓
-Parse / Normalize
-       ↓
-Stable Event + Provenance
-       ↓
-BlackLog findings ─┐
-                   ├──► Detection Pipeline ──► Canonical Findings
-Detection v3 ──────┘            │
-                                ├──► Event detection back-links
-                                ├──► Evidence IDs / confidence / MITRE
-                                └──► Finding classification
-                                              ↓
-                               Investigation → Incident → Report
-                                              │
-                                              └──► optional IndexedDB Vault
+payload
+  ↓
+parser.py
+  ├─ direct JSON / arrays
+  ├─ NDJSON / JSONL
+  ├─ Wazuh API wrappers
+  └─ Indexer/OpenSearch _source / hits.hits
+  ↓
+normalize.py
+  ├─ Windows EventChannel
+  ├─ Linux authentication
+  ├─ Wazuh manager / agent lifecycle
+  ├─ FIM
+  ├─ network / firewall
+  ├─ web
+  └─ generic Wazuh alerts
+  ↓
+detections.py
+  ├─ single-event defensive rules
+  └─ bounded cross-event correlation
+  ↓
+engine.py
+  ↓
+server.py / cli.py
 ```
+
+The local HTTP service binds to `127.0.0.1:8765` by default. It is optional and processes telemetry on the analyst machine.
+
+## Hybrid telemetry flow
+
+```text
+                    Analyst telemetry
+                           │
+                ┌──────────┴──────────┐
+                │                     │
+                ▼                     ▼
+        Browser BlackLog       Python Wazuh Engine
+        + Detection v3         localhost :8765
+                │                     │
+                ▼                     ▼
+        Browser findings       Python findings
+                │                     │
+                └──────────┬──────────┘
+                           ▼
+                 Investigation workflow
+                  Evidence / SOC / Report
+```
+
+The Python result is intentionally not required for the browser pipeline to function. If the service is offline, the hosted application remains usable.
+
+## Wazuh semantic safeguards
+
+The Python normalizer explicitly separates fields that are often incorrectly collapsed:
+
+- Wazuh `rule.id` is not a Windows Event ID;
+- Windows Event ID is sourced from `data.win.system.eventID` only;
+- `agent.ip` is endpoint/agent context and is not automatically treated as the attack/source IP;
+- target and subject/requesting Windows identities are kept separately;
+- Windows event time and Wazuh alert time remain distinct;
+- Wazuh source MITRE metadata is preserved as source context rather than an automatic DolosBlackMagic verdict.
 
 ## Finding contract
 
-Canonical findings may include:
+Canonical browser and Python findings use the same analyst-facing shape where practical:
 
 ```text
 id
@@ -65,63 +111,22 @@ evidence[]
 correlation metadata
 ```
 
-`kind` is analyst context (`informational`, `suspicious`, `correlated`, `high-confidence`), not a malicious verdict.
-
-## Correlation safeguards
-
-Grouped threshold and sequence rules require meaningful grouping values. Events missing the required group key are not combined into a shared placeholder bucket.
-
-Sequence stages can declare a repeat count. This allows rules such as repeated authentication failures followed by success to require an actual failure burst before advancing to the success stage.
-
-## Normalized event contract
-
-The BlackLog event schema includes timestamp, source/format, host, event ID, provider/channel, severity, message, identity, process lineage, network fields, action/status, URL/HTTP metadata, hashes, quality flags and attached detections.
-
-Platform events may additionally attach:
-
-```text
-stableId
-provenance.sourceFile
-provenance.recordIndex
-provenance.lineNumber
-provenance.byteStart
-provenance.byteEnd
-provenance.parser
-provenance.rawPreview
-```
-
-Unknown byte ranges remain `null`; offsets are never fabricated.
+A finding is analyst context, not an automatic malicious verdict.
 
 ## Persistence model
 
-Persistence is split by data class:
-
 - **LocalStorage** — compact preferences, investigation metadata, rules, triage state and saved views.
-- **IndexedDB Dataset Vault** — opt-in persistence for selected normalized telemetry collections.
+- **IndexedDB Dataset Vault** — explicit opt-in persistence for selected normalized browser telemetry.
 - **Memory** — newly imported telemetry remains ephemeral unless explicitly saved.
+- **Python service** — stateless per request; it does not persist uploaded telemetry by default.
 
-Saved datasets are sanitized, bounded to 50,000 events and roughly 24 MB, and can be exported/imported as validated local JSON.
+## Performance boundaries
 
-## Streaming protocol
-
-```text
-Main thread                    Worker
-    │                            │
-    ├──── START ────────────────►│
-    ├──── CHUNK ────────────────►│
-    │◄─── PROGRESS ──────────────┤
-    │◄─── PARTIAL_RESULT ────────┤
-    ├──── CHUNK ... ────────────►│
-    ├──── END ──────────────────►│
-    │◄─── COMPLETE ──────────────┤
-    └──── CANCEL ───────────────►│
-```
-
-Line-oriented telemetry uses this bounded worker path. Large single-object JSON and CSV remain on the bounded compatibility parser path to preserve parsing semantics.
+Browser line-oriented telemetry uses Web Worker chunking. Python HTTP requests are capped at 64 MB. Correlation uses bounded time windows and grouping rather than unbounded all-pairs comparisons.
 
 ## Privacy boundary
 
-No platform module automatically transmits artifacts, hashes, IPs, domains, URLs, rules or logs to third parties. Workers and IndexedDB are browser-local. There is no mandatory backend, analytics SDK or remote execution service.
+No module automatically transmits artifacts, hashes, IPs, domains, URLs, rules or logs to third parties. The Python service is loopback-only by default. There is no mandatory backend, analytics SDK or remote execution service.
 
 ## Remaining consolidation debt
 

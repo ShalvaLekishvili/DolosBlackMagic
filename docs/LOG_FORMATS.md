@@ -1,47 +1,85 @@
 # Log formats and normalization
 
-BlackLog uses content heuristics first and file extensions only as a browser file-picker convenience.
+DolosBlackMagic has two complementary ingestion paths: the browser BlackLog engine and the optional local Python Wazuh engine.
 
-## Supported ingestion modes
+## Browser BlackLog
 
-- JSON objects, arrays, and common `events` / `data` arrays
-- NDJSON / JSONL, including mixed valid and malformed lines
-- CSV with quoted values and escaped quotes
-- RFC3164-style Syslog
-- RFC5424-style Syslog
-- CEF
-- LEEF
-- whitespace-delimited `key=value` telemetry
-- generic plaintext fallback
+Content heuristics are preferred over file extensions. Browser ingestion supports:
+
+- JSON objects/arrays and common event/data arrays;
+- NDJSON / JSONL with malformed-line preservation;
+- CSV with quoted values;
+- RFC3164/RFC5424-style syslog;
+- CEF;
+- LEEF;
+- `key=value` telemetry;
+- generic plaintext fallback.
+
+## Python Wazuh engine
+
+The v0.10 Python companion specializes in Wazuh JSON-oriented exports:
+
+- direct Wazuh alert objects;
+- JSON arrays of Wazuh alerts;
+- NDJSON / JSONL;
+- Wazuh Indexer / OpenSearch `_source` documents;
+- OpenSearch `hits.hits` result wrappers;
+- Wazuh API `data.affected_items`, `data.items`, `alerts`, `affected_items` and similar item wrappers.
+
+The parser records wrapper types and parse statistics. Malformed NDJSON lines are preserved as partial evidence; the target remains zero silent drops.
+
+## Wazuh event families
+
+Normalized Python events are classified into a best-effort family such as:
+
+- `windows-event`;
+- `agent-lifecycle`;
+- `manager-alert`;
+- `linux-auth`;
+- `fim`;
+- `network`;
+- `web`;
+- `wazuh-alert`.
+
+Family classification is used to route defensive detection logic. Unknown events remain generic rather than being forced into an incorrect vendor family.
+
+## Wazuh normalized fields
+
+The Python normalizer preserves:
+
+- Windows event time and Wazuh alert time separately;
+- Windows Event ID;
+- Wazuh rule ID, level, description and groups;
+- Wazuh source MITRE IDs/techniques/tactics;
+- agent ID/name/IP;
+- manager name;
+- decoder name/parent and location;
+- host/computer/provider/channel;
+- target user/domain and subject/requesting user/domain;
+- logon type, auth package, logon process, status/substatus/failure reason;
+- process, parent process, PID and command line;
+- source/destination IP and ports;
+- protocol/action/status;
+- URL, HTTP method/status and user agent;
+- hashes;
+- Indexer `_index` and document `_id`;
+- Wazuh alert ID;
+- raw source record.
+
+## Semantic safeguards
+
+The engine does not infer fields from unrelated metadata merely to fill gaps:
+
+- `agent.ip` is not substituted for missing source IP;
+- Wazuh `rule.id` is not treated as Windows Event ID;
+- Wazuh root alert `id` is not treated as Windows Event ID;
+- missing Windows source address `-` normalizes to empty, not agent IP;
+- target and requesting identities remain separate.
 
 ## Parse-quality contract
 
-Every ingestion returns statistics for total records, parsed records, partial records, malformed records, unsupported content, dropped records and parser errors. The design target is **zero silent drops**. When a line cannot be parsed structurally, BlackLog preserves it as a marked record when safe.
-
-The Event Explorer exposes parsed/partial/malformed/dropped counters. Individual normalized events can carry `quality` flags such as `invalid-timestamp`, `missing-timestamp`, `malformed-record`, and `partial-record`.
-
-## Normalized fields
-
-BlackLog attempts to map common vendor and ECS-like names into:
-
-- timestamp and validity
-- source/dataset
-- host
-- event ID
-- channel/provider
-- severity
-- user and domain
-- process, parent process, PID and command line
-- source/destination IP and port
-- protocol
-- action/status
-- URL, HTTP method and user agent
-- hashes
-- message
-- raw event reference
-
-Unknown telemetry remains in `raw`; semantic meaning is not invented when a field cannot be confidently mapped.
+Every Python analysis reports total records, parsed, partial, malformed, unsupported, dropped and wrapper counts. Parser errors include bounded record/preview context.
 
 ## Known limitations
 
-“Supported” does not mean full vendor schema coverage. Vendor-specific nested structures may remain primarily in `raw` until an adapter is added. CSV delimiter support is currently comma-oriented. CEF/LEEF extensions are handled conservatively and do not implement every escaping rule in every product variant. Very large files are memory-bound because event collections are currently processed in browser memory.
+The Python engine is Wazuh-focused rather than a universal SIEM parser. Vendor-specific nested structures outside known Wazuh schemas remain available in `raw` and may require future adapters. The local HTTP request is capped at 64 MB. Browser and Python paths intentionally prioritize semantic correctness over pretending unsupported structures are fully normalized.
