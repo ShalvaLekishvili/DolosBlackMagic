@@ -1,0 +1,10 @@
+import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';
+const mem=new Map();const ctx={console,Date,Math,JSON,localStorage:{getItem:k=>mem.has(k)?mem.get(k):null,setItem:(k,v)=>mem.set(k,String(v)),removeItem:k=>mem.delete(k),key:i=>[...mem.keys()][i]??null,get length(){return mem.size}}};ctx.globalThis=ctx;vm.createContext(ctx);vm.runInContext(fs.readFileSync(new URL('../site/ops-engine.js',import.meta.url),'utf8'),ctx);const O=ctx.DBMOps;
+const findings=[{ruleId:'R1',name:'Auth failure',severity:'high',eventIds:[1],event:{timestamp:'2026-08-19T00:00:00Z',host:'h1',srcIp:'203.0.113.5'}},{ruleId:'R1',name:'Auth failure',severity:'high',eventIds:[2],event:{timestamp:'2026-08-19T00:01:00Z',host:'h1',srcIp:'203.0.113.5'}}];
+assert.equal(O.dedupeFindings(findings).length,1);assert.equal(O.dedupeFindings(findings)[0].duplicates,2);
+O.saveSuppression({field:'srcIp',op:'eq',value:'203.0.113.5',reason:'lab'});assert.equal(O.applySuppression(findings).suppressed.length,2);
+const enriched=O.enrichEvent({srcIp:'203.0.113.5',dstPort:3389,user:'admin',process:'powershell.exe',message:'failed login'});assert.ok(enriched.risk>=40);assert.ok(enriched.tags.includes('public-src'));
+const graph=O.buildInvestigation([{host:'h1',user:'alice',srcIp:'203.0.113.5',process:'powershell.exe'}],findings);assert.ok(graph.nodes.length>=4);assert.ok(graph.edges.length>=2);
+mem.set('dbm.test','hello');const snap=O.snapshotWorkspace({x:1});mem.clear();assert.equal(O.restoreWorkspace(snap)>=1,true);assert.equal(mem.get('dbm.test'),'hello');
+const h=O.health([{timestamp:'bad',message:''}],findings);assert.equal(h.invalidTime,1);assert.equal(h.emptyMsg,1);
+console.log('ops-engine tests passed');
