@@ -1,4 +1,4 @@
-importScripts('../log-engine.js','../log-normalize-fixes.js','./detection-v3.js');
+importScripts('../log-engine.js','../wazuh-adapter.js','../log-normalize-fixes.js','./detection-v3.js');
 (function(){
 'use strict';
 const sessions=new Map();const now=()=>performance.now();
