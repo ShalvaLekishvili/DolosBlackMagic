@@ -16,7 +16,7 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -24,7 +24,14 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 24
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
       - name: Runtime versions
-        run: node --version && npm --version
-      - name: Run regression and static integrity tests
+        run: node --version && npm --version && python --version
+      - name: Run browser regression and static integrity tests
         run: npm test
+      - name: Run Python Wazuh engine tests
+        working-directory: python-engine
+        run: python -m unittest discover -s tests -v
