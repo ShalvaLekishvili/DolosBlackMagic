@@ -4,7 +4,7 @@
   "private": true,
   "description": "Local-first browser DFIR, log intelligence, detection engineering, incident response and SOC operations workbench.",
   "scripts": {
-    "test": "node tests/core.test.mjs && node tests/log-engine.test.mjs && node tests/wazuh.test.mjs && node tests/soc.test.mjs && node tests/ops.test.mjs && node tests/security.test.mjs && node tests/platform.test.mjs && node tests/streaming.test.mjs && node tests/storage.test.mjs && node tests/detection-pipeline.test.mjs && node scripts/check-static.mjs",
+    "test": "node tests/core.test.mjs && node tests/log-engine.test.mjs && node tests/wazuh.test.mjs && node tests/wazuh-real-sample.test.mjs && node tests/auth-detections.test.mjs && node tests/soc.test.mjs && node tests/ops.test.mjs && node tests/security.test.mjs && node tests/platform.test.mjs && node tests/streaming.test.mjs && node tests/storage.test.mjs && node tests/detection-pipeline.test.mjs && node scripts/check-static.mjs",
     "serve": "python3 -m http.server 8080 -d site"
   },
   "engines": {"node": ">=24"}
