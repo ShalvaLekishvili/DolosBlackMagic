@@ -8,4 +8,5 @@ test('builds a versioned dataset with compact findings',()=>{const d=S.buildData
 test('rejects invalid snapshots and unsupported schemas',()=>{assert.equal(S.validateDataset(null).valid,false);assert.equal(S.validateDataset({schemaVersion:2,id:'x',events:[]}).valid,false);assert.ok(S.validateDataset({schemaVersion:2,id:'x',events:[]}).errors.includes('unsupported-schema'))});
 test('enforces bounded event persistence',()=>{const events=Array.from({length:S.MAX_EVENTS+1},(_,i)=>({id:i,message:'x'}));assert.throws(()=>S.buildDataset({events,findings:[],summary:{}},{name:'too large'}),e=>e.code==='EVENT_LIMIT')});
 test('caps long untrusted fields during persistence',()=>{const long='x'.repeat(20000),e=S.sanitizeEvent({message:long,commandLine:long,userAgent:long,raw:long});assert.equal(e.message.length,12000);assert.equal(e.commandLine.length,12000);assert.equal(e.userAgent.length,4000);assert.equal(e.rawPreview.length,4000)});
-console.log(`Storage tests passed: ${passed}/5`);
+test('cyclic raw telemetry degrades to a safe preview instead of throwing',()=>{const raw={kind:'cycle'};raw.self=raw;const e=S.sanitizeEvent({id:9,message:'x',raw});assert.equal(e.rawPreview,'[unserializable raw event]')});
+console.log(`Storage tests passed: ${passed}/6`);
