@@ -6,13 +6,13 @@
 
 **Local-first browser DFIR · Log Intelligence · Detection Engineering · Evidence · Investigation · SOC Operations**
 
-[![Version](https://img.shields.io/badge/version-0.7.0-2b3645?style=flat-square)](package.json)
+[![Version](https://img.shields.io/badge/version-0.8.0-2b3645?style=flat-square)](package.json)
 [![Node](https://img.shields.io/badge/Node.js-%3E%3D24-2b3645?style=flat-square)](package.json)
 [![CI](https://img.shields.io/github/actions/workflow/status/ShalvaLekishvili/DolosBlackMagic/ci.yml?branch=main&style=flat-square&label=CI)](.github/workflows/ci.yml)
 [![Pages](https://img.shields.io/badge/GitHub%20Pages-live-2b3645?style=flat-square)](https://shalvalekishvili.github.io/DolosBlackMagic/)
 [![License](https://img.shields.io/badge/license-MIT-2b3645?style=flat-square)](LICENSE)
 
-**[Live Application](https://shalvalekishvili.github.io/DolosBlackMagic/)** · **[ქართული განმარტება](#-ქართული-განმარტება)** · **[Architecture](docs/ARCHITECTURE.md)** · **[Security](docs/SECURITY.md)** · **[v0.7 Release](docs/V0.7.md)**
+**[Live Application](https://shalvalekishvili.github.io/DolosBlackMagic/)** · **[ქართული განმარტება](#-ქართული-განმარტება)** · **[Architecture](docs/ARCHITECTURE.md)** · **[Security](docs/SECURITY.md)** · **[v0.8 Release](docs/V0.8.md)**
 
 </div>
 
@@ -20,30 +20,38 @@
 
 ## What is DolosBlackMagic?
 
-DolosBlackMagic 0.7.0 is a **privacy-first, browser-based DFIR/SOC analyst workstation** for local artifact inspection, heterogeneous telemetry analysis, evidence-driven detections, investigation continuity, incident handling and reporting.
+DolosBlackMagic 0.8.0 is a **privacy-first, browser-based DFIR/SOC analyst workstation** for local artifact inspection, heterogeneous telemetry analysis, evidence-driven detections, investigation continuity, incident handling and reporting.
 
 Core analysis remains local to the browser. The project does **not** require a mandatory backend, account, telemetry service, analytics platform or paid dependency.
 
 > DolosBlackMagic is analyst-assistance software. It is not an antivirus, EDR, malware sandbox, full SIEM backend, exploit framework or authoritative threat-intelligence verdict engine.
 
-## v0.7 — Analyst Data Platform
+## v0.8 — Storage & Investigation Reliability
 
-v0.7 moves the product beyond isolated workspaces and focuses on **data scale, evidence provenance and investigation continuity**.
+v0.8 builds on the v0.7 Analyst Data Platform and strengthens the product's browser-local persistence model without abandoning static hosting or privacy.
 
-### Added in v0.7
+### Added in v0.8
 
-- chunked `File`/`Blob` ingestion using bounded slices instead of `File.text()` for streamed file analysis;
-- explicit worker protocol: `START → CHUNK → PROGRESS → PARTIAL_RESULT → COMPLETE / CANCEL / ERROR`;
-- UTF-8-safe `TextDecoder` chunk reconstruction and line-boundary carry handling;
-- stable evidence references such as `EVT-0000124` for streamed events;
-- evidence provenance: source file, record index, line number when known, parser and raw preview;
-- first-class investigation model with data sources, bookmarks, findings, entities, notes, actions and timeline state;
-- Event Explorer evidence drawer with normalized/raw comparison and analyst bookmarks;
-- query history chips and keyboard-accessible event inspection;
-- Detection Engine v3 primitives for nested conditions, grouped thresholds, distinct counts and bounded sequences;
-- defensive correlation examples for authentication spray, success-after-failure and service-install/process sequences;
-- versioned investigation snapshots with schema validation;
-- centralized dependency-free application event bus and deterministic v0.7 bootstrap boundary.
+- **Local Dataset Vault** backed by IndexedDB for opt-in persistence of selected telemetry collections;
+- explicit dataset schema/version metadata;
+- dataset size and event-count safety bounds;
+- compact event persistence that avoids retaining arbitrary raw objects;
+- saved dataset reopen flow back into Event Explorer;
+- browser storage quota/usage visibility where supported;
+- optional request for durable browser storage;
+- investigation-aware dataset scoping;
+- dedicated storage regression tests;
+- v0.8 PWA/static integrity enforcement for the new platform assets.
+
+### Preserved from v0.7
+
+- chunked `File`/`Blob` ingestion for line-oriented telemetry;
+- Web Worker parsing/detection pipeline with cancellation and measurable progress;
+- stable evidence references and provenance;
+- first-class investigation model;
+- Event Explorer evidence drawer and bookmarks;
+- Detection Engine v3 nested conditions, thresholds, distinct counts and bounded sequences;
+- validated local investigation snapshots.
 
 ## Workstation map
 
@@ -57,7 +65,7 @@ v0.7 moves the product beyond isolated workspaces and focuses on **data scale, e
 | **Investigation Graph** | Explore relationships | hosts, users, IPs, processes, domains, URLs, hashes and findings |
 | **Case Timeline** | Order evidence | source telemetry and investigation chronology |
 | **Indicators** | Review IOCs | extraction, defanging and pivots |
-| **Investigations** | Preserve analyst context | browser-local cases plus v0.7 evidence bookmarks |
+| **Investigations** | Preserve analyst context | evidence bookmarks, notes, entities and Local Dataset Vault |
 | **Reports** | Handoff findings | Markdown, JSON and print/PDF-ready output |
 
 ## Architecture at a glance
@@ -71,37 +79,56 @@ Local artifact / file / log / text
 │ Artifact · Events · Detection · SOC│
 └───────────────┬────────────────────┘
                 │
-       ┌────────▼─────────┐
-       │ v0.7 Platform API│
-       │ Event bus        │
-       │ Investigations   │
-       │ Detection v3     │
-       │ Streaming client │
-       └───────┬──────────┘
+       ┌────────▼──────────┐
+       │ Platform services │
+       │ Event bus         │
+       │ Investigations    │
+       │ Detection v3      │
+       │ Streaming client  │
+       │ Workspace store   │
+       └───────┬───────────┘
                │
-     ┌─────────▼───────────┐
-     │ Chunked log worker  │
-     │ parse → normalize   │
-     │ detect → correlate  │
-     │ provenance          │
-     └─────────┬───────────┘
-               │
-     Findings + Evidence IDs
-               │
+   ┌───────────┴─────────────┐
+   │                         │
+┌──▼────────────────┐  ┌────▼───────────────┐
+│ Chunked log worker│  │ IndexedDB Dataset  │
+│ parse / normalize │  │ Vault (opt-in)     │
+│ detect / correlate│  │ selected telemetry │
+│ provenance        │  │ only               │
+└────────┬──────────┘  └────────────────────┘
+         │
+ Findings + Evidence IDs
+         │
  Investigation → Incident → Report
 
 No mandatory backend · No analytics · No automatic sample upload
 ```
 
-The legacy v0.6 engines remain a compatibility layer while stable capabilities are progressively consolidated into semantic `site/platform/` modules. This avoids a risky rewrite while reducing future patch stacking.
+The older workstation engines remain a compatibility layer while stable capabilities are progressively consolidated into semantic `site/platform/` modules. This avoids a risky rewrite while reducing future patch stacking.
 
 ## Large telemetry processing
 
-For file ingestion, the v0.7 streaming client reads bounded `Blob.slice()` chunks and sends decoded text incrementally to a dedicated worker. The worker reconstructs line boundaries, analyzes batches and emits measurable progress based on bytes and records processed.
+For line-oriented file ingestion, the streaming client reads bounded `Blob.slice()` chunks and sends decoded text incrementally to a dedicated worker. The worker reconstructs line boundaries, analyzes batches and emits measurable progress based on bytes and records processed.
 
 Cancellation terminates the active analysis and **does not commit an unfinished investigation result**.
 
-Current streamed event retention is intentionally bounded. DolosBlackMagic does not automatically persist entire imported security log files into browser storage.
+Large single-object JSON and CSV continue to use the compatibility parser path to preserve parser semantics. They remain bounded by a browser safety ceiling rather than pretending to support unsafe streaming semantics.
+
+## Local Dataset Vault
+
+Telemetry persistence is **explicit**, not automatic. The analyst chooses when to save the currently loaded collection.
+
+The vault:
+
+- uses IndexedDB when available;
+- stores a compact normalized representation rather than arbitrary raw event objects;
+- keeps provenance previews bounded;
+- caps a saved dataset at 50,000 events and approximately 24 MB;
+- exposes storage usage/quota where the browser supports `navigator.storage.estimate()`;
+- can request durable browser storage, but does not assume that the browser will grant it;
+- allows a saved dataset to be reopened into Event Explorer without uploading it anywhere.
+
+Investigation metadata remains compatible with the existing LocalStorage-backed v0.7 model. v0.8 does not silently delete or migrate older analyst work.
 
 ## Evidence provenance
 
@@ -118,11 +145,11 @@ rawPreview: ...
 
 Byte ranges are only populated when accurately available; DolosBlackMagic does not fabricate offsets.
 
-Evidence can be bookmarked into the active investigation and is then retained as a compact subset containing normalized context plus provenance, rather than silently persisting the complete telemetry source.
+Evidence can be bookmarked into the active investigation and is retained as a compact subset containing normalized context plus provenance.
 
 ## Detection Engine v3
 
-The v0.7 platform adds declarative correlation primitives without executing user JavaScript.
+Detection logic remains declarative and defensive.
 
 Supported concepts include:
 
@@ -135,25 +162,7 @@ Supported concepts include:
 - distinct-value counts;
 - bounded multi-stage sequences.
 
-Example defensive correlations include:
-
-```text
-same source IP
-  → repeated authentication failures
-  → >= 3 distinct usernames
-  → within 3 minutes
-```
-
-and:
-
-```text
-failed authentication
-  → successful authentication
-  → same source
-  → bounded time window
-```
-
-Findings remain analyst-assistance signals and should be validated against environment context.
+Example defensive correlations include authentication spray, success-after-failure and service-install/process sequences. Findings remain analyst-assistance signals and must be validated against environment context.
 
 ## Privacy & security model
 
@@ -164,7 +173,8 @@ Findings remain analyst-assistance signals and should be validated against envir
 - imported rules remain declarative data;
 - no `eval()` or `new Function()` for detection logic;
 - custom regex receives browser-safety validation;
-- investigation persistence stores compact analyst-selected state rather than entire log files by default;
+- large telemetry persistence is opt-in and browser-local;
+- saved events are sanitized and bounded before IndexedDB persistence;
 - Netlify deployment includes CSP and baseline privacy/security headers.
 
 ## Run locally
@@ -187,7 +197,7 @@ Node.js 24+ is required. Runtime dependencies are not required.
 npm test
 ```
 
-The regression gate covers artifact analysis, parsing/normalization, detection/correlation, SOC/operations state, regex safety, v0.7 investigation behavior, worker protocol invariants and static/PWA deployment integrity.
+The regression gate covers artifact analysis, parsing/normalization, detection/correlation, SOC/operations state, regex safety, investigation behavior, worker protocol invariants, dataset persistence validation and static/PWA deployment integrity.
 
 ## Deploy
 
@@ -209,19 +219,33 @@ Relative paths keep the project compatible with the `/DolosBlackMagic/` GitHub P
 
 ## რა არის DolosBlackMagic?
 
-**DolosBlackMagic 0.7.0** არის ბრაუზერზე დაფუძნებული, local-first ტიპის **DFIR / SOC ანალიტიკოსის სამუშაო გარემო**. პროექტი აერთიანებს არტეფაქტის ანალიზს, სხვადასხვა ტიპის ლოგების დამუშავებას, დეტექციებს, evidence-ს, IOC-ებს, entity correlation-ს, investigation-ს, incident workflow-სა და ანგარიშგებას.
+**DolosBlackMagic 0.8.0** არის ბრაუზერზე დაფუძნებული, local-first ტიპის **DFIR / SOC ანალიტიკოსის სამუშაო გარემო**. პროექტი აერთიანებს არტეფაქტის ანალიზს, სხვადასხვა ტიპის ლოგების დამუშავებას, დეტექციებს, evidence-ს, IOC-ებს, entity correlation-ს, investigation-ს, incident workflow-სა და ანგარიშგებას.
 
 მთავარი პრინციპი რჩება **მონაცემების ლოკალურად დამუშავება** — უსაფრთხოების ფაილები და ლოგები არ საჭიროებს სავალდებულო cloud backend-ზე ატვირთვას.
 
-## რა შეიცვალა v0.7-ში?
+## რა შეიცვალა v0.8-ში?
 
-v0.7-ის მთავარი თემა არის **Analyst Data Platform** — ანუ სისტემის ცალკეული მოდულები უფრო მჭიდროდ უკავშირდება ერთმანეთს და evidence-ის წარმოშობა უფრო მკაფიო ხდება.
+v0.8-ის მთავარი მიმართულებაა **Storage & Investigation Reliability**. v0.7-ში დამატებული streaming/evidence პლატფორმის შემდეგ უკვე შესაძლებელი გახდა analyst-ის მიერ არჩეული telemetry collection-ის უსაფრთხოდ და ლოკალურად შენახვა IndexedDB-ში.
+
+### Local Dataset Vault
+
+Investigations სამუშაო სივრცეში დაემატა Local Dataset Vault. მისი საშუალებით შეგიძლია მიმდინარე Event Explorer telemetry შეინახო ბრაუზერში და მოგვიანებით ხელახლა გახსნა.
+
+მნიშვნელოვანი პრინციპებია:
+
+- შენახვა ხდება მხოლოდ analyst-ის მოქმედებით — ავტომატური persistence არ ხდება;
+- მონაცემები არ იგზავნება server/cloud-ზე;
+- IndexedDB გამოიყენება დიდი structured მონაცემებისთვის;
+- event-ები persistence-მდე გადიან sanitization-ს;
+- arbitrary raw object სრულად არ ინახება;
+- raw preview და გრძელი ტექსტური ველები bounded-ია;
+- თითო dataset-ზე მოქმედებს 50,000 event და დაახლოებით 24 MB safety limit;
+- შესაძლებელია browser storage usage/quota-ის ნახვა;
+- მხარდაჭერის შემთხვევაში შესაძლებელია durable storage-ის მოთხოვნაც.
 
 ### დიდი ლოგების chunked დამუშავება
 
-ფაილის ანალიზისას ახალი pipeline აღარ არის დამოკიდებული მხოლოდ მთლიანი ფაილის ერთ დიდ JavaScript string-ად გარდაქმნაზე. ბრაუზერი ფაილს კითხულობს ნაწილებად (`Blob.slice()`), `TextDecoder` ინარჩუნებს UTF-8 სიმბოლოების საზღვრებს, worker კი აღადგენს record/line საზღვრებს.
-
-worker protocol მოიცავს:
+line-oriented telemetry-სთვის pipeline კვლავ იყენებს `Blob.slice()` + Web Worker არქიტექტურას. worker protocol მოიცავს:
 
 ```text
 START
@@ -233,67 +257,21 @@ CANCEL
 ERROR
 ```
 
-Progress ეფუძნება რეალურად დამუშავებულ byte-ებსა და record-ებს — fake პროცენტები არ გამოიყენება.
+Progress ეფუძნება რეალურად დამუშავებულ byte-ებსა და record-ებს.
+
+JSON array/single-object და CSV compatibility parser-ზე რჩება, რათა chunk boundary-ებმა parser semantics არ შეცვალოს.
 
 ### Evidence Provenance
 
-streamed event-ებს ეძლევა სტაბილური reference, მაგალითად:
-
-```text
-EVT-0000124
-```
-
-და შესაძლებელია შესაბამისი provenance-ის შენახვა:
-
-- source file;
-- record index;
-- line number — როდესაც ზუსტად ვიცით;
-- parser;
-- raw preview.
-
-byte range არ იწერება, თუ მისი ზუსტად დადგენა შეუძლებელია.
-
-### Event Explorer v2
-
-Event row-ის არჩევისას იხსნება evidence drawer, სადაც ჩანს:
-
-- normalized event;
-- raw/original preview;
-- source metadata;
-- parse context;
-- related findings;
-- evidence bookmark action;
-- entity pivot.
-
-bookmarked event ინახება აქტიურ investigation-ში compact evidence-ის სახით და არა მთელი log source-ის ასლად.
+streamed event-ებს აქვთ სტაბილური reference, მაგალითად `EVT-0000124`, და შესაძლებელია source file, record index, line number, parser და bounded raw preview-ის შენახვა.
 
 ### Investigation Model
 
-v0.7-ში investigation გახდა პირველი კლასის ობიექტი და შეუძლია შეინახოს:
-
-- data sources;
-- bookmarked evidence;
-- findings;
-- entities;
-- notes;
-- timeline;
-- analyst actions;
-- incident references;
-- saved filters.
+Investigation ინახავს data source-ებს, bookmarked evidence-ს, findings-ს, entities-ს, notes-ს, timeline-ს, analyst actions-ს, incident reference-ებსა და saved filter-ებს. v0.8 არსებული v0.7 LocalStorage state-ს არ შლის.
 
 ### Detection Engine v3
 
-დაემატა უფრო ძლიერი declarative correlation logic:
-
-- nested AND / OR / NOT;
-- threshold;
-- time window;
-- group-by;
-- distinct count;
-- sequence stages;
-- safe regex validation.
-
-მაგალითად შესაძლებელია ერთ finding-ად გაერთიანდეს ერთი source IP-დან რამდენიმე სხვადასხვა მომხმარებლის წინააღმდეგ მოკლე დროში განმეორებული failed authentication.
+დეტექციები კვლავ declarative მონაცემებია და მხარდაჭერილია nested AND/OR/NOT, threshold, time window, group-by, distinct count, sequence stages და safe regex validation.
 
 ## კონფიდენციალურობა
 
@@ -304,7 +282,8 @@ DolosBlackMagic:
 - ავტომატურად არ აგზავნის hash/IP/domain/file მონაცემებს მესამე მხარეს;
 - არ ასრულებს ატვირთულ ფაილებს;
 - არ იყენებს `eval()`-ს custom detection logic-ისთვის;
-- არ ინახავს მთელ დიდ log file-ს browser storage-ში ავტომატურად.
+- დიდ telemetry collection-ს ინახავს მხოლოდ შენი პირდაპირი მოთხოვნით;
+- Dataset Vault მთლიანად browser-local IndexedDB-ზე მუშაობს.
 
 ## ლოკალურად გაშვება
 
@@ -337,9 +316,13 @@ DolosBlackMagic/
 │   │   ├── app-bus.js
 │   │   ├── investigation-engine.js
 │   │   ├── detection-v3.js
+│   │   ├── workspace-store.js
+│   │   ├── dataset-vault-ui.js
 │   │   ├── log-stream-client.js
 │   │   ├── log-stream-worker.js
 │   │   ├── event-explorer-v2.js
+│   │   ├── investigation-ui.js
+│   │   ├── global-search.js
 │   │   ├── bootstrap.js
 │   │   └── platform.css
 │   ├── core.js / app.js
@@ -350,6 +333,7 @@ DolosBlackMagic/
 ├── tests/
 │   ├── platform.test.mjs
 │   ├── streaming.test.mjs
+│   ├── storage.test.mjs
 │   └── existing regression suites
 ├── docs/
 ├── scripts/check-static.mjs
@@ -368,6 +352,7 @@ DolosBlackMagic/
 - [Testing](docs/TESTING.md)
 - [v0.6 release](docs/V0.6.md)
 - [v0.7 release](docs/V0.7.md)
+- [v0.8 release](docs/V0.8.md)
 
 ## License
 
