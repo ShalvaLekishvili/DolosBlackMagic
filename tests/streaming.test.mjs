@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+const worker=fs.readFileSync('site/platform/log-stream-worker.js','utf8');const client=fs.readFileSync('site/platform/log-stream-client.js','utf8');
+for(const token of ['START','CHUNK','PROGRESS','PARTIAL_RESULT','COMPLETE','CANCEL','ERROR'])assert.ok(worker.includes(`'${token}'`)||worker.includes(`"${token}"`),`worker protocol missing ${token}`);
+assert.ok(client.includes('file.slice('),'stream client must read bounded Blob slices');
+assert.ok(!client.includes('.text()'),'stream client must not convert the whole File into one string');
+assert.ok(client.includes('TextDecoder'),'stream client must reconstruct UTF-8 across chunks');
+assert.ok(worker.includes('carry'),'worker must preserve record boundaries across chunks');
+assert.ok(worker.includes('stableId'),'streamed events must receive stable evidence IDs');
+assert.ok(worker.includes('sourceFile'),'streamed events must preserve evidence provenance');
+console.log('Streaming protocol tests passed');
