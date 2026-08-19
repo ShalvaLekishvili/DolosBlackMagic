@@ -15,8 +15,8 @@ The command runs the following suites sequentially:
 - `security.test.mjs` — analyst-controlled regex safety guard.
 - `platform.test.mjs` — investigation lifecycle, evidence provenance retention, snapshot validation and Detection Engine v3 grouped/sequence behavior.
 - `streaming.test.mjs` — worker protocol tokens, bounded Blob slicing, UTF-8 streaming decode, cross-chunk carry and evidence-provenance invariants.
-- `storage.test.mjs` — Dataset Vault sanitization, schema validation, event-count bounds, approximate-size metadata and long-field truncation.
-- `check-static.mjs` — deployable asset existence, HTML references, duplicate static IDs, navigation targets, service-worker cache membership, PWA subpath safety, release version, bilingual README alignment, release documentation and Netlify CSP.
+- `storage.test.mjs` — Dataset Vault sanitization, schema validation, event-count bounds, cyclic raw-event handling, portable import rebinding and long-field truncation.
+- `check-static.mjs` — deployable asset existence, production JavaScript syntax parsing, HTML references, duplicate static IDs, navigation targets, service-worker cache membership, PWA subpath safety, release version, bilingual README alignment, release documentation and Netlify CSP.
 
 ## CI
 
@@ -40,10 +40,12 @@ After serving `site/`, verify:
 12. Ctrl/Cmd+K focuses local global search and grouped results navigate correctly.
 13. In Investigations, saving current telemetry creates a Dataset Vault entry in IndexedDB.
 14. Opening a saved dataset returns it to Event Explorer and preserves findings/summary context.
-15. Deleting a saved dataset does not delete investigation metadata or evidence bookmarks.
-16. Browser storage usage/quota renders when `navigator.storage.estimate()` is supported.
-17. Mobile sidebar, evidence drawer, investigation workspace and Dataset Vault remain usable.
-18. Markdown/JSON/print exports continue to work.
+15. Exporting a saved dataset downloads a local JSON package without network access.
+16. Importing a valid dataset revalidates/re-sanitizes it and binds it to the active investigation; malformed or unsupported schemas are rejected.
+17. Deleting a saved dataset does not delete investigation metadata or evidence bookmarks.
+18. Browser storage usage/quota renders when `navigator.storage.estimate()` is supported.
+19. Mobile sidebar, evidence drawer, investigation workspace and Dataset Vault remain usable.
+20. Markdown/JSON/print exports continue to work.
 
 ## Performance model
 
@@ -57,7 +59,8 @@ Additional controls include:
 - bounded DOM event rendering;
 - bounded investigation graphs;
 - bounded streamed normalized-event retention;
-- bounded persisted raw previews and long fields.
+- bounded persisted raw previews and long fields;
+- 30 MB UI guard on portable dataset import files.
 
 Performance tests deliberately avoid brittle millisecond pass/fail thresholds. Correctness and bounded behavior are hard gates.
 
