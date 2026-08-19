@@ -1,0 +1,11 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+const code=fs.readFileSync(new URL('../site/platform/workspace-store.js',import.meta.url),'utf8');
+const ctx={console,Date,JSON,Math,Number,String,Array,Object,Map,Set,Blob,structuredClone,window:null};ctx.window=ctx;vm.createContext(ctx);vm.runInContext(code,ctx);const S=ctx.DBMPlatform.workspaceStore;let passed=0;const test=(name,fn)=>{fn();passed++;console.log('✓',name)};
+test('sanitizes telemetry without retaining arbitrary raw objects',()=>{const event=S.sanitizeEvent({id:7,message:'hello',raw:{secret:'x'},quality:['partial-record'],provenance:{sourceFile:'a.log',lineNumber:2,rawPreview:'hello'}});assert.equal(event.message,'hello');assert.equal(event.rawPreview,'{"secret":"x"}');assert.equal(event.provenance.lineNumber,2);assert.equal('raw' in event,false)});
+test('builds a versioned dataset with compact findings',()=>{const d=S.buildDataset({events:[{id:1,message:'x'}],findings:[{id:'F1',ruleId:'R1',name:'rule',eventIds:[1]}],summary:{format:'ndjson',sourceName:'a.jsonl'}},{name:'case data'});assert.equal(d.schemaVersion,1);assert.equal(d.events.length,1);assert.equal(d.findings.length,1);assert.equal(d.name,'case data');assert.ok(d.approxBytes>0);assert.equal(S.validateDataset(d).valid,true)});
+test('rejects invalid snapshots and unsupported schemas',()=>{assert.equal(S.validateDataset(null).valid,false);assert.equal(S.validateDataset({schemaVersion:2,id:'x',events:[]}).valid,false);assert.ok(S.validateDataset({schemaVersion:2,id:'x',events:[]}).errors.includes('unsupported-schema'))});
+test('enforces bounded event persistence',()=>{const events=Array.from({length:S.MAX_EVENTS+1},(_,i)=>({id:i,message:'x'}));assert.throws(()=>S.buildDataset({events,findings:[],summary:{}},{name:'too large'}),e=>e.code==='EVENT_LIMIT')});
+test('caps long untrusted fields during persistence',()=>{const long='x'.repeat(20000),e=S.sanitizeEvent({message:long,commandLine:long,userAgent:long,raw:long});assert.equal(e.message.length,12000);assert.equal(e.commandLine.length,12000);assert.equal(e.userAgent.length,4000);assert.equal(e.rawPreview.length,4000)});
+console.log(`Storage tests passed: ${passed}/5`);
