@@ -2,8 +2,11 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
-const context={console,Date,Math,JSON,Map,Set,Array,String,Number,RegExp,Error,performance};
+const listeners=new Map();
+const context={console,Date,Math,JSON,Map,Set,Array,String,Number,RegExp,Error,performance,Promise,DBMState:{}};
 context.window=context;
+context.addEventListener=(name,fn)=>listeners.set(name,fn);
+context.document={getElementById(){return null}};
 context.DBMPlatform={bus:{emit(){}}};
 vm.createContext(context);
 for(const file of ['site/platform/detection-v3.js','site/platform/detection-pipeline.js']){
@@ -27,6 +30,8 @@ test('merges v3 correlations into canonical findings and links evidence events',
   assert.equal(finding.kind,'correlated');
   assert.ok(events.every(e=>e.detections.includes('CORR-AUTH-SPRAY')));
   assert.ok(result.summary.detectionPipeline.v3Added>=1);
+  assert.equal(result.summary.detectionPipeline.canonical,true);
+  assert.equal(result.summary.findings,result.findings.length);
 });
 
 test('deduplicates equivalent rule and evidence combinations',()=>{
@@ -68,4 +73,16 @@ test('missing group key does not correlate unrelated events',()=>{
   assert.equal(D.runRule(rule,events).findings.length,0);
 });
 
-console.log(`Detection pipeline tests passed: ${passed}/5`);
+test('dbm:log-analysis listener applies canonical detections before UI render',()=>{
+  const live=Array.from({length:5},(_,i)=>({id:i+1,timestamp:`2026-08-19T10:00:0${i}Z`,eventId:'4625',host:'SERVER01',user:'administrator',logonType:'3',message:'An account failed to log on.',detections:[]}));
+  const result={events:live,findings:[],summary:{format:'json',findingSeverity:{}}};
+  const listener=listeners.get('dbm:log-analysis');
+  assert.equal(typeof listener,'function');
+  listener({detail:{result}});
+  assert.ok(result.findings.some(f=>f.ruleId==='CORR-NETWORK-LOGON-FAIL-BURST'));
+  assert.equal(result.summary.detectionPipeline.canonical,true);
+  assert.equal(result.summary.findings,result.findings.length);
+  assert.ok(result.events.every(e=>e.detections.includes('CORR-NETWORK-LOGON-FAIL-BURST')));
+});
+
+console.log(`Detection pipeline tests passed: ${passed}/6`);
