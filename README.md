@@ -1,67 +1,49 @@
 # DolosBlackMagic
 
-**Turn artifacts and logs into answers.** DolosBlackMagic is a local-first browser DFIR, threat investigation, log-intelligence and detection-engineering workbench designed to run on free static hosting such as GitHub Pages or Netlify.
+**Turn artifacts and logs into answers.** DolosBlackMagic v0.5.0 is a local-first browser DFIR, log-intelligence, detection-engineering, investigation and SOC-operations workbench designed for static hosting.
 
-## v0.3 — Detection Studio / SOC Workflow
+## v0.5 highlights
 
-The v0.3 upgrade extends BlackLog into an analyst workflow with ten integrated capabilities:
+- Resilient BlackLog ingestion with content-based detection for JSON, NDJSON/JSONL, CSV, RFC3164/RFC5424 Syslog, CEF, LEEF, key=value and plaintext.
+- Zero-silent-drop goal: malformed and partial records are preserved with parse-quality metadata instead of silently disappearing.
+- Richer normalized event schema covering channel/provider, identity/domain, process lineage/PID, network protocol, HTTP fields, hashes and raw-event reference.
+- Evidence-driven findings with severity, confidence, ATT&CK mapping, firing explanation, remediation guidance and false-positive context.
+- Sliding-window brute-force and port-scan correlation.
+- Detection Studio rule lifecycle: Draft → Enabled → Disabled → Archived, rule testing, NOT and numeric operators, safe regex validation, Sigma-like and Wazuh import translation reports.
+- Triage history, disposition, severity override, richer incident state and entity pivots.
+- Safer workspace backup/restore with version metadata, namespace allow-listing and import validation.
+- Responsive/keyboard/accessibility hardening, bounded event rendering and debounced indexed filtering.
+- Netlify CSP/security headers, subpath-safe PWA manifest and synchronized service-worker assets.
 
-1. **Custom detection-rule builder** — create local rules against the normalized BlackLog schema using equals, contains, starts-with, ends-with and regex operators.
-2. **Sigma-like import** — import common Sigma YAML selections and translate supported fields into normalized DolosBlackMagic fields.
-3. **Wazuh XML import** — import supported `<rule>` blocks, `<field>` conditions, `<match>` clauses and severity levels.
-4. **Windows/Sysmon Event Knowledge Base** — contextual reference for high-value Windows Security and Sysmon event IDs with ATT&CK hints.
-5. **Alert triage** — mark findings as new, investigating, benign, escalated or closed and store analyst notes locally.
-6. **Incident creation** — convert current BlackLog findings/events into durable local incidents with severity, entities and status workflow.
-7. **Entity correlation graph** — correlate incident hosts, users, IP addresses, processes and findings in a relationship view.
-8. **Saved analyst views** — preserve reusable search, severity, source and detections-only filters and re-apply them to BlackLog.
-9. **Incident reporting** — export incidents as Markdown or JSON with findings, entities, timeline and analyst notes.
-10. **Regression + deployment hardening** — Node 24 CI now covers artifact, BlackLog and SOC-engine behavior; PWA cache v3 includes all Detection Studio assets.
+## Core capabilities
 
-All Detection Studio persistence uses browser LocalStorage. Imported rules and telemetry are parsed as data and are never executed.
+### Artifact analysis
 
-## BlackLog Intelligence
+Local file/text intake, SHA-256/SHA-1, file-type signatures, entropy, printable strings, IOC extraction/defanging, heuristic behavior scoring, safe Base64 decoding, artifact timeline/graph, browser-local case storage and Markdown/JSON/print reporting.
 
-DolosBlackMagic includes a browser-side log pipeline for heterogeneous security telemetry:
+### Event Explorer / BlackLog
 
-- Automatic format detection: JSON, NDJSON/JSONL, CSV, RFC-style Syslog, CEF, LEEF, key=value and plain text
-- Common event normalization for timestamp, source, host, event ID, user, process, command line, source/destination IP and port, action, URL and message
-- Built-in detections for Windows Security, Sysmon-like telemetry, Linux SSH/sudo activity, web attack probes, firewall denies, encoded PowerShell, credential dumping and security-control tampering
-- MITRE ATT&CK mappings on detections
-- Correlation for repeated authentication failures and multi-port scanning behavior
-- Searchable normalized event console
-- Severity, source and detections-only filtering
-- Findings queue and telemetry entity summary
-- CSV normalized-event export and full JSON analysis export
-- Up to 35 MB single-file browser ingestion in the BlackLog UI
-- Generic fallback for unknown log lines instead of silently dropping data
+- best-effort heterogeneous log ingestion without relying only on file extensions;
+- normalized searchable events and CSV/JSON export;
+- parse statistics: total, parsed, partial, malformed and dropped;
+- built-in defensive detections for Windows, Sysmon-style telemetry, Linux authentication/cron, network scanning and common web probes;
+- evidence inspector explaining why a finding fired and which source events caused it.
 
-“Any log” means broad best-effort ingestion. Vendor-perfect semantics still require source-specific adapters as those sources are added.
+“Any log” means broad **best-effort ingestion**, not vendor-perfect semantic support. Unknown or malformed telemetry is retained where safe and clearly marked.
 
-## Artifact / DFIR features
+### Detection Studio
 
-- Local file and text intake (20 MB artifact UI limit)
-- SHA-256 and SHA-1 via Web Crypto
-- PE / ELF / ZIP / Office / PDF / script signature classification
-- Shannon entropy and printable-string extraction
-- IOC extraction for URLs, domains, IPv4, email addresses and common hashes
-- Defanged IOC copy view
-- Suspicious command/behavior heuristics with risk score
-- MITRE ATT&CK technique hints
-- JSON / NDJSON event normalization into a chronological timeline
-- Draggable investigation relationship graph (BlackGraph)
-- Safe layered Base64 decoder (no payload execution)
-- Browser LocalStorage case library (Grimoire)
-- Markdown and JSON report export plus Print/Save-as-PDF
-- Responsive desktop, tablet and mobile interface
-- PWA/service-worker caching
-- GitHub Actions CI and GitHub Pages deployment
-- Netlify static deployment configuration
+Custom rules remain data, never executable code. Supported rule operators include equals/not-equals, contains, starts/ends, regex, existence, membership and numeric comparisons. Rules can be tested against currently loaded events. Sigma-like YAML and Wazuh XML importers translate only supported constructs and report partial/unsupported content.
 
-## Privacy model
+### SOC operations
 
-The core application has **no backend**. Artifact bytes, imported logs, custom detection rules, triage state, saved views and incidents remain in the browser unless you explicitly export them.
+Triage, incident creation, analyst notes/status history, entity correlation, saved views, suppression/deduplication, risk context, data-quality health and versioned workspace export/restore all work browser-side.
 
-> Treat the browser itself as part of your security boundary. Do not analyze highly sensitive or dangerous samples in an untrusted browser profile or on an unmanaged endpoint.
+## Privacy and security model
+
+The application has no mandatory backend, accounts, telemetry or analytics. Artifacts, logs, rules and investigation state stay in the browser unless the analyst explicitly exports them. Uploaded artifacts are never executed. Imported rules are parsed as data; there is no `eval` or `new Function` rule execution.
+
+Treat the browser profile and endpoint as part of the security boundary. DolosBlackMagic is analyst-assistance software, **not** an antivirus, EDR, malware sandbox, full SIEM backend or authoritative threat-intelligence verdict system.
 
 ## Run locally
 
@@ -71,21 +53,27 @@ python3 -m http.server 8080 -d site
 
 Open `http://127.0.0.1:8080`.
 
-Regression tests require Node.js 24+ and no npm package dependencies:
+## Test
+
+Node.js 24+; no npm package dependencies are required.
 
 ```bash
 npm test
 ```
 
-The suite covers artifact analysis, BlackLog parsing/detection/correlation, Detection Studio rule matching/imports, event knowledge, incidents, entity graphs, saved views and static asset integrity.
+The suite covers artifact analysis, parsers/normalization, detection/correlation, rule lifecycle/imports, SOC persistence, operations/workspace validation, regex safety and static deployment integrity.
 
-## GitHub Pages
+## Deploy
 
-The included `.github/workflows/pages.yml` tests and deploys `site/` from `main`. Repository Pages source must be configured as **GitHub Actions**.
+### GitHub Pages
 
-Typical project URL:
+`.github/workflows/pages.yml` runs `npm test`, uploads `site/` and deploys through GitHub Pages. The app uses relative paths and is designed to work under `/DolosBlackMagic/`.
 
-`https://<username>.github.io/DolosBlackMagic/`
+Live project URL: `https://shalvalekishvili.github.io/DolosBlackMagic/`
+
+### Netlify
+
+`netlify.toml` publishes `site/` and applies CSP plus baseline security/privacy headers.
 
 ## Structure
 
@@ -93,35 +81,29 @@ Typical project URL:
 DolosBlackMagic/
 ├── site/
 │   ├── index.html
-│   ├── app.css
-│   ├── log.css
-│   ├── soc.css
-│   ├── app.js
-│   ├── core.js
-│   ├── log-engine.js
-│   ├── log-ui.js
-│   ├── soc-engine.js
-│   ├── soc-ui.js
-│   ├── favicon.svg
-│   ├── manifest.webmanifest
-│   └── sw.js
+│   ├── app.css / log.css / soc.css / ops.css / v05.css
+│   ├── core.js / app.js
+│   ├── log-engine.js / log-ui.js
+│   ├── soc-engine.js / soc-ui.js / soc-v05-ui.js
+│   ├── ops-engine.js / ops-ui.js
+│   ├── security-runtime.js / ui-hardening.js
+│   ├── manifest.webmanifest / sw.js / favicon.svg
 ├── tests/
 │   ├── core.test.mjs
 │   ├── log-engine.test.mjs
-│   └── soc.test.mjs
+│   ├── soc.test.mjs
+│   ├── ops.test.mjs
+│   └── security.test.mjs
 ├── scripts/check-static.mjs
-├── .github/workflows/
-│   ├── ci.yml
-│   └── pages.yml
+├── docs/
+├── .github/workflows/{ci.yml,pages.yml}
 ├── netlify.toml
-├── package.json
-├── LICENSE
-└── README.md
+└── package.json
 ```
 
-## Security scope
+## Documentation
 
-DolosBlackMagic is a **static-analysis and investigation-assistance interface**. It does not execute submitted scripts/binaries and is not a malware sandbox, antivirus engine, EDR, full SIEM backend or authoritative threat-intelligence verdict system. Built-in and custom detections are analyst-assistance content and should be validated before operational use.
+See `docs/ARCHITECTURE.md`, `docs/LOG_FORMATS.md`, `docs/DETECTIONS.md`, `docs/SECURITY.md`, `docs/PRIVACY.md`, `docs/TESTING.md` and `docs/V0.5.md`.
 
 ## License
 
