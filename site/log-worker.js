@@ -1,0 +1,2 @@
+importScripts('./log-engine.js','./log-normalize-fixes.js');
+self.onmessage=event=>{const {id,text}=event.data||{};if(!id)return;try{self.postMessage({id,type:'status',stage:'analyzing'});const started=performance.now();const result=self.DBMLogEngine.analyzeLogs(String(text||''));self.postMessage({id,type:'result',elapsedMs:Math.round(performance.now()-started),result})}catch(error){self.postMessage({id,type:'error',message:error?.message||'Worker analysis failed'})}};
