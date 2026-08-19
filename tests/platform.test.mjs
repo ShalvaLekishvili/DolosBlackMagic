@@ -6,7 +6,10 @@ const context={console,localStorage,performance,structuredClone,Date,Math,JSON,M
 for(const file of ['site/platform/investigation-engine.js','site/platform/detection-v3.js'])vm.runInContext(fs.readFileSync(file,'utf8'),context,{filename:file});
 const I=context.DBMPlatform.investigations,D=context.DBMPlatform.detectionsV3;
 {
- const inv=I.create({title:'Case A'});assert.equal(I.active().id,inv.id);I.addSource(inv.id,{name:'security.jsonl',format:'ndjson'});I.bookmarkEvent(inv.id,{stableId:'EVT-0000001',timestamp:'2026-08-19T10:00:00Z',message:'failed logon',host:'WS01'},{sourceFile:'security.jsonl',recordIndex:1,lineNumber:1,parser:'ndjson',rawPreview:'{"event":4625}'});I.addEntity(inv.id,'host','WS01',{timestamp:'2026-08-19T10:00:00Z'});const saved=I.get(inv.id);assert.equal(saved.dataSources.length,1);assert.equal(saved.bookmarks[0].provenance.recordIndex,1);assert.equal(saved.entities[0].value,'WS01');const snap=I.snapshot();assert.equal(I.validateSnapshot(snap).valid,true);assert.equal(I.validateSnapshot({schemaVersion:99,investigations:[]}).valid,false);
+ const inv=I.create({title:'Case A'});assert.equal(I.active().id,inv.id);I.addSource(inv.id,{name:'security.jsonl',format:'ndjson'});I.bookmarkEvent(inv.id,{stableId:'EVT-0000001',timestamp:'2026-08-19T10:00:00Z',message:'failed logon',host:'WS01'},{sourceFile:'security.jsonl',recordIndex:1,lineNumber:1,parser:'ndjson',rawPreview:'{"event":4625}'});I.addEntity(inv.id,'host','WS01',{timestamp:'2026-08-19T10:00:00Z'});const saved=I.get(inv.id);assert.equal(saved.dataSources.length,1);assert.equal(saved.bookmarks[0].provenance.recordIndex,1);assert.equal(saved.entities[0].value,'WS01');const snap=I.snapshot();assert.equal(snap.appVersion,'0.8.0');assert.equal(I.validateSnapshot(snap).valid,true);assert.equal(I.validateSnapshot({schemaVersion:99,investigations:[]}).valid,false);
+}
+{
+ const inv=I.active();I.addSource(inv.id,{id:'SRC-DS-1',name:'saved.ndjson',format:'ndjson',retention:'indexeddb'});I.addSource(inv.id,{name:'saved.ndjson',format:'ndjson',retention:'indexeddb'});const saved=I.get(inv.id);assert.equal(saved.dataSources.filter(x=>x.name==='saved.ndjson'&&x.retention==='indexeddb').length,1);
 }
 {
  const events=[

@@ -1,10 +1,10 @@
 {
   "name": "dolosblackmagic",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "private": true,
   "description": "Local-first browser DFIR, log intelligence, detection engineering, incident response and SOC operations workbench.",
   "scripts": {
-    "test": "node tests/core.test.mjs && node tests/log-engine.test.mjs && node tests/soc.test.mjs && node tests/ops.test.mjs && node tests/security.test.mjs && node tests/platform.test.mjs && node tests/streaming.test.mjs && node scripts/check-static.mjs",
+    "test": "node tests/core.test.mjs && node tests/log-engine.test.mjs && node tests/soc.test.mjs && node tests/ops.test.mjs && node tests/security.test.mjs && node tests/platform.test.mjs && node tests/streaming.test.mjs && node tests/storage.test.mjs && node scripts/check-static.mjs",
     "serve": "python3 -m http.server 8080 -d site"
   },
   "engines": {"node": ">=24"}
